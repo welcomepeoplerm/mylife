@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MyLyfe Icon Generator</title>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+        
+        sizes.forEach(size => {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            
+            // Background gradient
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#6da34d');
+            gradient.addColorStop(1, '#c5e99b');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+            
+            // Draw simplified logo
+            const scale = size / 200;
+            ctx.save();
+            ctx.scale(scale, scale);
+            
+            // White circle background
+            ctx.fillStyle = 'rgba(255,255,255,0.95)';
+            ctx.beginPath();
+            ctx.arc(100, 100, 85, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Mountains
+            ctx.fillStyle = '#6da34d';
+            ctx.beginPath();
+            ctx.moveTo(30, 130);
+            ctx.lineTo(60, 80);
+            ctx.lineTo(90, 130);
+            ctx.closePath();
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.moveTo(70, 130);
+            ctx.lineTo(100, 70);
+            ctx.lineTo(130, 130);
+            ctx.closePath();
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.moveTo(110, 130);
+            ctx.lineTo(140, 90);
+            ctx.lineTo(170, 130);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Sun
+            ctx.fillStyle = '#8d9c71';
+            ctx.beginPath();
+            ctx.arc(150, 60, 18, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.restore();
+            
+            // Download
+            canvas.toBlob(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `icon-${size}x${size}.png`;
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+        });
+        
+        document.body.innerHTML += '<p>Icons generated! Check your downloads folder.</p>';
+    </script>
+</body>
+</html>

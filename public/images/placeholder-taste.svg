@@ -1,0 +1,103 @@
+<!-- Immagine placeholder per Taste (Cibo e Vino) -->
+<svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2C5F5D;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#5FB8AC;stop-opacity:1" />
+    </linearGradient>
+    <radialGradient id="plateGrad">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f0f0f0;stop-opacity:1" />
+    </radialGradient>
+    <linearGradient id="wineGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#722F37;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#A0293B;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Sfondo -->
+  <rect width="1200" height="800" fill="url(#bgGrad)"/>
+  
+  <!-- Texture legno tavolo -->
+  <rect y="500" width="1200" height="300" fill="#8B4513" opacity="0.3"/>
+  <line x1="0" y1="550" x2="1200" y2="550" stroke="#654321" stroke-width="2" opacity="0.2"/>
+  <line x1="0" y1="650" x2="1200" y2="650" stroke="#654321" stroke-width="2" opacity="0.2"/>
+  <line x1="0" y1="750" x2="1200" y2="750" stroke="#654321" stroke-width="2" opacity="0.2"/>
+  
+  <!-- Piatto principale -->
+  <ellipse cx="500" cy="600" rx="180" ry="30" fill="#333" opacity="0.2"/>
+  <circle cx="500" cy="580" r="200" fill="url(#plateGrad)" stroke="#ccc" stroke-width="3"/>
+  
+  <!-- Cibo sul piatto -->
+  <g>
+    <!-- Pasta/piatto principale -->
+    <ellipse cx="480" cy="560" rx="80" ry="40" fill="#F4B942" opacity="0.8"/>
+    <ellipse cx="490" cy="570" rx="70" ry="35" fill="#FFCD5C" opacity="0.7"/>
+    <ellipse cx="510" cy="575" rx="60" ry="30" fill="#F4B942" opacity="0.9"/>
+    
+    <!-- Verdure -->
+    <circle cx="420" cy="590" r="25" fill="#A8D5BA"/>
+    <circle cx="560" cy="585" r="20" fill="#5FB8AC"/>
+    <ellipse cx="500" cy="615" rx="30" ry="15" fill="#2C5F5D" opacity="0.6"/>
+  </g>
+  
+  <!-- Bicchiere di vino -->
+  <g>
+    <!-- Ombra -->
+    <ellipse cx="820" cy="650" rx="50" ry="10" fill="#000" opacity="0.2"/>
+    
+    <!-- Base bicchiere -->
+    <ellipse cx="820" cy="640" rx="45" ry="8" fill="#ddd"/>
+    <rect x="815" y="620" width="10" height="20" fill="#e0e0e0"/>
+    
+    <!-- Calice -->
+    <path d="M 760 480 L 770 620 L 870 620 L 880 480 Z" 
+          fill="none" stroke="#ddd" stroke-width="3" opacity="0.6"/>
+    
+    <!-- Vino nel bicchiere -->
+    <path d="M 775 550 L 780 620 L 860 620 L 865 550 Z" 
+          fill="url(#wineGrad)" opacity="0.8"/>
+    
+    <!-- Riflessi sul vetro -->
+    <path d="M 780 500 L 785 580 L 795 580 L 790 500" 
+          fill="white" opacity="0.3"/>
+  </g>
+  
+  <!-- Forchetta -->
+  <g transform="translate(200, 500)">
+    <rect x="0" y="0" width="15" height="200" fill="#c0c0c0"/>
+    <rect x="-5" y="0" width="8" height="30" fill="#c0c0c0"/>
+    <rect x="6" y="0" width="8" height="30" fill="#c0c0c0"/>
+    <rect x="17" y="0" width="8" height="30" fill="#c0c0c0"/>
+  </g>
+  
+  <!-- Coltello -->
+  <g transform="translate(900, 480)">
+    <rect x="0" y="0" width="12" height="220" fill="#c0c0c0"/>
+    <path d="M 0 0 L 12 0 L 12 40 L 6 45 L 0 40 Z" fill="#d0d0d0"/>
+  </g>
+  
+  <!-- Decorazioni (olive oil, herbs) -->
+  <g opacity="0.7">
+    <circle cx="300" cy="450" r="15" fill="#F4B942"/>
+    <circle cx="280" cy="460" r="12" fill="#FFCD5C"/>
+    
+    <!-- Rametto di rosmarino -->
+    <line x1="350" y1="420" x2="380" y2="480" stroke="#2C5F5D" stroke-width="3"/>
+    <ellipse cx="355" cy="430" rx="3" ry="8" fill="#A8D5BA"/>
+    <ellipse cx="360" cy="440" rx="3" ry="8" fill="#A8D5BA"/>
+    <ellipse cx="365" cy="450" rx="3" ry="8" fill="#A8D5BA"/>
+    <ellipse cx="370" cy="460" rx="3" ry="8" fill="#A8D5BA"/>
+    <ellipse cx="375" cy="470" rx="3" ry="8" fill="#A8D5BA"/>
+  </g>
+  
+  <!-- Testo -->
+  <text x="600" y="250" font-family="Georgia, serif" font-size="80" 
+        font-weight="bold" fill="white" text-anchor="middle" opacity="0.9">
+    Sapori d'Umbria
+  </text>
+  <text x="600" y="310" font-family="Georgia, serif" font-size="36" 
+        font-style="italic" fill="white" text-anchor="middle" opacity="0.8">
+    Gusto e Tradizione
+  </text>
+</svg>

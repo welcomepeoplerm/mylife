@@ -1,0 +1,68 @@
+<!-- Immagine placeholder per Journey (Paesaggio Umbria) -->
+<svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="skyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#87CEEB;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#B0E0E6;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="hillGrad1" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#5FB8AC;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#A8D5BA;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="hillGrad2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#A8D5BA;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#5FB8AC;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Cielo -->
+  <rect width="1200" height="800" fill="url(#skyGrad)"/>
+  
+  <!-- Sole -->
+  <circle cx="900" cy="150" r="80" fill="#F4B942" opacity="0.9"/>
+  <circle cx="900" cy="150" r="100" fill="#F4B942" opacity="0.3"/>
+  
+  <!-- Colline in lontananza -->
+  <path d="M 0 500 Q 200 350 400 500 T 800 500 T 1200 500 L 1200 800 L 0 800 Z" 
+        fill="#A8D5BA" opacity="0.4"/>
+  
+  <!-- Colline medie -->
+  <path d="M 0 550 Q 300 400 600 550 T 1200 550 L 1200 800 L 0 800 Z" 
+        fill="url(#hillGrad1)"/>
+  
+  <!-- Colline vicine -->
+  <path d="M 0 650 Q 250 550 500 650 T 1000 650 T 1200 650 L 1200 800 L 0 800 Z" 
+        fill="url(#hillGrad2)"/>
+  
+  <!-- Alberi stilizzati -->
+  <g opacity="0.7">
+    <ellipse cx="200" cy="680" rx="30" ry="50" fill="#2C5F5D"/>
+    <rect x="195" y="700" width="10" height="40" fill="#8B4513"/>
+    
+    <ellipse cx="350" cy="690" rx="25" ry="45" fill="#2C5F5D"/>
+    <rect x="347" y="710" width="6" height="30" fill="#8B4513"/>
+    
+    <ellipse cx="750" cy="675" rx="35" ry="55" fill="#2C5F5D"/>
+    <rect x="745" y="700" width="10" height="45" fill="#8B4513"/>
+    
+    <ellipse cx="950" cy="685" rx="28" ry="48" fill="#2C5F5D"/>
+    <rect x="947" y="705" width="6" height="35" fill="#8B4513"/>
+  </g>
+  
+  <!-- Nuvole -->
+  <g fill="white" opacity="0.6">
+    <ellipse cx="250" cy="120" rx="60" ry="30"/>
+    <ellipse cx="280" cy="110" rx="50" ry="25"/>
+    <ellipse cx="310" cy="120" rx="55" ry="28"/>
+    
+    <ellipse cx="650" cy="180" rx="70" ry="35"/>
+    <ellipse cx="680" cy="170" rx="60" ry="30"/>
+    <ellipse cx="720" cy="180" rx="65" ry="32"/>
+  </g>
+  
+  <!-- Testo -->
+  <text x="600" y="750" font-family="Arial, sans-serif" font-size="48" 
+        font-weight="bold" fill="white" text-anchor="middle" opacity="0.9">
+    Umbria
+  </text>
+</svg>
