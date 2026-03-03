@@ -1,20 +1,24 @@
 // Main application entry point - My Lyfe Umbria
 import './firebase-config.js';
-import { registerSW } from './pwa-utils.js';
 import { i18n } from './i18n.js';
 import { router } from './router.js';
 import { createHeader } from './components.js';
 import { showInitialSplash } from './splash.js';
 import { uiConfigService } from './ui-config-service.js';
+import { notificationService } from './notification-service.js';
+import { checkAndShowNotificationBanner } from './notification-ui.js';
+import './pwa-utils.js'; // Registra beforeinstallprompt per prompt installazione PWA
 import { 
   renderHomePage, 
   renderMyHomePage, 
   renderMyJourneyPage, 
   renderMyTastePage, 
+  renderMyEventsPage,
   renderMyAssistantPage,
   renderHomeDetailPage,
   renderJourneyDetailPage,
-  renderTasteDetailPage
+  renderTasteDetailPage,
+  renderEventsDetailPage
 } from './pages.js';
 
 // Inizializza l'applicazione
@@ -64,6 +68,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const page = await renderHomePage();
     mainContent.innerHTML = '';
     mainContent.appendChild(page);
+    
+    // Mostra banner notifiche solo sulla homepage
+    checkAndShowNotificationBanner();
   });
   
   router.register('/home', async () => {
@@ -80,6 +87,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   router.register('/taste', async () => {
     const page = await renderMyTastePage();
+    mainContent.innerHTML = '';
+    mainContent.appendChild(page);
+  });
+  
+  router.register('/events', async () => {
+    const page = await renderMyEventsPage();
     mainContent.innerHTML = '';
     mainContent.appendChild(page);
   });
@@ -105,6 +118,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   router.register('/taste/detail/:id', async (params) => {
     const page = await renderTasteDetailPage(params);
+    mainContent.innerHTML = '';
+    mainContent.appendChild(page);
+  });
+  
+  router.register('/events/detail/:id', async (params) => {
+    const page = await renderEventsDetailPage(params);
     mainContent.innerHTML = '';
     mainContent.appendChild(page);
   });
@@ -145,10 +164,49 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.error('❌ Errore Firebase:', error);
   }
   
-  // Registra Service Worker per PWA
-  const swRegistration = await registerSW();
-  if (swRegistration) {
-    console.log('✅ Service Worker registrato - PWA attiva');
+  // Service Worker gestito da notification-service.js (firebase-messaging-sw.js)
+  // Non registriamo sw.js separatamente per evitare conflitti
+  // const swRegistration = await registerSW();
+  // if (swRegistration) {
+  //   console.log('✅ Service Worker registrato - PWA attiva');
+  // }
+  
+  // Inizializza servizio notifiche (opzionale, non blocca l'app se fallisce)
+  try {
+    // Attendi che l'inizializzazione del servizio notifiche sia completata
+    // (il costruttore ha già avviato _init() che fa checkSupport + auto-registrazione token)
+    await notificationService.waitForInit();
+    
+    console.log('✅ Notifiche push inizializzate');
+  } catch (error) {
+    console.warn('⚠️ Notifiche push non disponibili:', error.message);
+    // L'app continua a funzionare normalmente senza notifiche
+  }
+  
+  // Ascolta messaggi dal Service Worker (es: navigazione da notifica)
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', (event) => {
+      console.log('📨 Messaggio dal Service Worker:', event.data);
+      
+      if (event.data.type === 'NAVIGATE_TO' && event.data.url) {
+        console.log('🔀 Navigazione richiesta a:', event.data.url);
+        
+        // Rimuovi il prefisso origin se presente
+        let url = event.data.url.replace(window.location.origin, '');
+        
+        // Rimuovi il prefisso /# se presente (per hash routing)
+        if (url.startsWith('/#')) {
+          url = url.substring(2);
+        } else if (url.startsWith('#')) {
+          url = url.substring(1);
+        } else if (!url.startsWith('/')) {
+          url = '/' + url;
+        }
+        
+        console.log('🔀 Navigazione a:', url);
+        router.navigate(url);
+      }
+    });
   }
 });
 

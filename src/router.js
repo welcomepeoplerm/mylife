@@ -5,10 +5,15 @@ class Router {
     this.routes = {};
     this.currentRoute = '';
     this.listeners = [];
+    this.isNavigating = false; // Flag per prevenire navigazioni concorrenti
     
     // Gestisce navigazione browser
     window.addEventListener('popstate', () => {
-      this.navigate(window.location.hash.slice(1) || '/');
+      const newPath = window.location.hash.slice(1) || '/';
+      // Evita loop se stiamo già navigando
+      if (!this.isNavigating && this.currentRoute !== newPath) {
+        this.navigate(newPath);
+      }
     });
   }
   
@@ -19,8 +24,19 @@ class Router {
   
   // Naviga a una route con supporto parametri
   navigate(path, params = {}) {
-    if (this.currentRoute === path) return;
+    // Prevenzione loop: non navigare se siamo già su questa route
+    if (this.currentRoute === path && !Object.keys(params).length) {
+      console.log('🔄 Navigation skipped - already on', path);
+      return;
+    }
     
+    // Prevenzione navigazioni concorrenti
+    if (this.isNavigating) {
+      console.log('⏳ Navigation in progress, skipping...');
+      return;
+    }
+    
+    this.isNavigating = true;
     this.currentRoute = path;
     this.currentParams = params;
     window.location.hash = path;
@@ -61,6 +77,9 @@ class Router {
     
     // Notifica listeners
     this.listeners.forEach(callback => callback(path));
+    
+    // Reset flag navigazione
+    this.isNavigating = false;
   }
   
   // Ottiene i parametri correnti

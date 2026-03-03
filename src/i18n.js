@@ -9,13 +9,16 @@ const translations = {
     myHome: "My Home",
     myJourney: "My Journey",
     myTaste: "My Taste",
+    myEvents: "My Events",
     myAssistant: "My Assistant",
     
     // Descrizioni menu
     myHomeDesc: "Istruzioni del casale",
     myJourneyDesc: "La tua guida turistica",
     myTasteDesc: "Ristoranti e degustazioni",
+    myEventsDesc: "Eventi e manifestazioni",
     myAssistantDesc: "Il tuo assistente personale",
+    myContactsDesc: "Contatti rapidi",
     
     // Comuni
     loading: "Caricamento...",
@@ -47,6 +50,12 @@ const translations = {
     bookingRequired: "Prenotazione necessaria",
     bookingRecommended: "Prenotazione consigliata",
     
+    // My Events
+    eventDate: "Data Evento",
+    eventTime: "Orario",
+    eventLocation: "Luogo",
+    allEvents: "Tutti gli eventi",
+    
     // My Assistant
     sendMessage: "Invia messaggio",
     yourMessage: "Il tuo messaggio...",
@@ -71,13 +80,16 @@ const translations = {
     myHome: "My Home",
     myJourney: "My Journey",
     myTaste: "My Taste",
+    myEvents: "My Events",
     myAssistant: "My Assistant",
     
     // Menu descriptions
     myHomeDesc: "Farmhouse instructions",
     myJourneyDesc: "Your tourist guide",
     myTasteDesc: "Restaurants and tastings",
+    myEventsDesc: "Events and festivals",
     myAssistantDesc: "Your personal assistant",
+    myContactsDesc: "Quick contacts",
     
     // Common
     loading: "Loading...",
@@ -109,6 +121,12 @@ const translations = {
     bookingRequired: "Booking required",
     bookingRecommended: "Booking recommended",
     
+    // My Events
+    eventDate: "Event Date",
+    eventTime: "Time",
+    eventLocation: "Location",
+    allEvents: "All events",
+    
     // My Assistant
     sendMessage: "Send message",
     yourMessage: "Your message...",
@@ -133,13 +151,16 @@ const translations = {
     myHome: "My Home",
     myJourney: "My Journey",
     myTaste: "My Taste",
+    myEvents: "My Events",
     myAssistant: "My Assistant",
     
     // Descriptions menu
     myHomeDesc: "Instructions du gîte",
     myJourneyDesc: "Votre guide touristique",
     myTasteDesc: "Restaurants et dégustations",
+    myEventsDesc: "Événements et festivals",
     myAssistantDesc: "Votre assistant personnel",
+    myContactsDesc: "Contacts rapides",
     
     // Commun
     loading: "Chargement...",
@@ -171,6 +192,12 @@ const translations = {
     bookingRequired: "Réservation nécessaire",
     bookingRecommended: "Réservation recommandée",
     
+    // My Events
+    eventDate: "Date de l'événement",
+    eventTime: "Heure",
+    eventLocation: "Lieu",
+    allEvents: "Tous les événements",
+    
     // My Assistant
     sendMessage: "Envoyer un message",
     yourMessage: "Votre message...",
@@ -195,13 +222,16 @@ const translations = {
     myHome: "My Home",
     myJourney: "My Journey",
     myTaste: "My Taste",
+    myEvents: "My Events",
     myAssistant: "My Assistant",
     
     // Menübeschreibungen
     myHomeDesc: "Anweisungen für das Landhaus",
     myJourneyDesc: "Ihr Reiseführer",
     myTasteDesc: "Restaurants und Verkostungen",
+    myEventsDesc: "Veranstaltungen und Festivals",
     myAssistantDesc: "Ihr persönlicher Assistent",
+    myContactsDesc: "Schnellkontakte",
     
     // Allgemein
     loading: "Laden...",
@@ -233,6 +263,12 @@ const translations = {
     bookingRequired: "Reservierung erforderlich",
     bookingRecommended: "Reservierung empfohlen",
     
+    // My Events
+    eventDate: "Veranstaltungsdatum",
+    eventTime: "Uhrzeit",
+    eventLocation: "Ort",
+    allEvents: "Alle Veranstaltungen",
+    
     // My Assistant
     sendMessage: "Nachricht senden",
     yourMessage: "Ihre Nachricht...",
@@ -257,13 +293,16 @@ const translations = {
     myHome: "My Home",
     myJourney: "My Journey",
     myTaste: "My Taste",
+    myEvents: "My Events",
     myAssistant: "My Assistant",
     
     // Descripciones menú
     myHomeDesc: "Instrucciones de la casa rural",
     myJourneyDesc: "Tu guía turística",
     myTasteDesc: "Restaurantes y degustaciones",
+    myEventsDesc: "Eventos y festivales",
     myAssistantDesc: "Tu asistente personal",
+    myContactsDesc: "Contactos rápidos",
     
     // Común
     loading: "Cargando...",
@@ -294,6 +333,12 @@ const translations = {
     priceRange: "Rango de precios",
     bookingRequired: "Reserva necesaria",
     bookingRecommended: "Reserva recomendada",
+    
+    // My Events
+    eventDate: "Fecha del Evento",
+    eventTime: "Hora",
+    eventLocation: "Lugar",
+    allEvents: "Todos los eventos",
     
     // My Assistant
     sendMessage: "Enviar mensaje",

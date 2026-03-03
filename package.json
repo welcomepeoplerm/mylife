@@ -1,6 +1,6 @@
 {
   "name": "mylyfeumbria",
-  "version": "1.0.0",
+  "version": "1.6.0",
   "description": "PWA mobile app con Firebase per MyLyfeUmbria",
   "type": "module",
   "main": "index.js",
@@ -12,10 +12,15 @@
     "deploy": "npm run build && firebase deploy --only hosting",
     "populate-db": "node scripts/populate-db.js"
   },
-  "keywords": ["pwa", "firebase", "mylyfeumbria"],
+  "keywords": [
+    "pwa",
+    "firebase",
+    "mylyfeumbria"
+  ],
   "author": "gozzolif@gmail.com",
   "license": "ISC",
   "dependencies": {
+    "@fluentui/web-components": "^2.6.1",
     "firebase": "^10.7.2",
     "workbox-window": "^7.0.0"
   },

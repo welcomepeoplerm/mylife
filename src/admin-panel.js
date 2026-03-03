@@ -1,99 +1,350 @@
 // Pannello Admin - MyLyfe
-
+import './admin-fluent.css';
 import { i18n } from './i18n.js';
 import { authService } from './auth-service.js';
 import { router } from './router.js';
 import { firebaseService } from './firebase-service.js';
 import { uiConfigService } from './ui-config-service.js';
+import { getVersion } from './version.js';
+import { sendNotificationForNewEvent } from './admin-notification-service.js';
 import { db, storage } from './firebase-config.js';
-import { doc, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { doc, setDoc, deleteDoc, updateDoc, collection, getDocs } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
-// Dashboard Admin
+// Cache per categorie
+let categoriesCache = {
+  journey: {},
+  taste: {},
+  events: {}
+};
+
+// Ottieni tutte le categorie esistenti per una collezione
+async function getExistingCategories(collectionName) {
+  // Controlla cache
+  if (categoriesCache[collectionName] && Object.keys(categoriesCache[collectionName]).length > 0) {
+    return categoriesCache[collectionName];
+  }
+  
+  const categories = {};
+  const languages = ['it', 'en', 'fr', 'de', 'es'];
+  
+  try {
+    const querySnapshot = await getDocs(collection(db, collectionName));
+    
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      if (data.categoria) {
+        languages.forEach(lang => {
+          if (data.categoria[lang]) {
+            const cat = data.categoria[lang].trim();
+            if (cat) {
+              if (!categories[lang]) {
+                categories[lang] = new Set();
+              }
+              categories[lang].add(cat);
+            }
+          }
+        });
+      }
+    });
+    
+    // Converti Set in Array
+    languages.forEach(lang => {
+      if (categories[lang]) {
+        categories[lang] = Array.from(categories[lang]).sort();
+      } else {
+        categories[lang] = [];
+      }
+    });
+    
+    // Salva in cache
+    categoriesCache[collectionName] = categories;
+    
+  } catch (error) {
+    console.error('Errore recupero categorie:', error);
+    languages.forEach(lang => {
+      categories[lang] = [];
+    });
+  }
+  
+  return categories;
+}
+
+// Invalida cache categorie
+function invalidateCategoriesCache(collectionName) {
+  categoriesCache[collectionName] = {};
+}
+
+// Elimina una categoria da tutti i documenti
+async function deleteCategoryFromAll(collectionName, lang, categoryValue) {
+  try {
+    const querySnapshot = await getDocs(collection(db, collectionName));
+    const batch = [];
+    
+    querySnapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      
+      // Controlla se questo documento usa la categoria da eliminare
+      if (data.categoria && data.categoria[lang] === categoryValue) {
+        // Rimuovi solo questa lingua dalla categoria
+        const updatedCategoria = { ...data.categoria };
+        delete updatedCategoria[lang];
+        
+        // Se la categoria è vuota in tutte le lingue, rimuovi il campo
+        const hasOtherLangs = Object.keys(updatedCategoria).length > 0;
+        
+        if (hasOtherLangs) {
+          batch.push(
+            updateDoc(doc(db, collectionName, docSnap.id), {
+              [`categoria.${lang}`]: ''
+            })
+          );
+        } else {
+          batch.push(
+            updateDoc(doc(db, collectionName, docSnap.id), {
+              categoria: {}
+            })
+          );
+        }
+      }
+    });
+    
+    // Esegui tutti gli aggiornamenti
+    await Promise.all(batch);
+    
+    // Invalida cache
+    invalidateCategoriesCache(collectionName);
+    
+    // Ricarica la pagina admin per mostrare i cambiamenti
+    const contentArea = document.querySelector('#admin-content');
+    if (contentArea) {
+      const activeBtn = document.querySelector('.fl-sidebar-item.active');
+      if (activeBtn) {
+        const section = activeBtn.dataset.section;
+        contentArea.innerHTML = '<div class="fl-loader"><div class="fl-spinner"></div> Caricamento...</div>';
+        const sectionContent = await renderAdminSection(section);
+        contentArea.innerHTML = '';
+        contentArea.appendChild(sectionContent);
+      }
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Errore eliminazione categoria:', error);
+    throw error;
+  }
+}
+
+// Dashboard Admin (Fluent UI 2 Design)
 export async function renderAdminDashboard() {
   const container = document.createElement('div');
-  container.className = 'admin-container';
-  
+  container.className = 'fl-admin-root';
+
   const user = authService.getCurrentUser();
-  
+  const initials = (user.email || 'A').substring(0, 2).toUpperCase();
+
+  const navItems = [
+    { section: 'dashboard', icon: '<i class="ph ph-squares-four"></i>', label: 'Dashboard' },
+    { section: 'home',      icon: '<i class="ph ph-house"></i>',        label: 'My Home' },
+    { section: 'journey',   icon: '<i class="ph ph-map-trifold"></i>',  label: 'My Journey' },
+    { section: 'taste',     icon: '<i class="ph ph-fork-knife"></i>',   label: 'My Taste' },
+    { section: 'events',    icon: '<i class="ph ph-calendar-dots"></i>',label: 'My Events' },
+    { section: 'divider' },
+    { section: 'ui-config', icon: '<i class="ph ph-sliders"></i>',      label: 'Configurazione UI' },
+  ];
+
   container.innerHTML = `
-    <div class="admin-header">
-      <div>
-        <h2>🎛️ Pannello Amministrativo</h2>
-        <p>Benvenuto, ${user.email}</p>
+    <!-- Top bar -->
+    <header class="fl-admin-topbar">
+      <div class="fl-topbar-brand">
+        <div class="fl-topbar-icon"><i class="ph ph-leaf"></i></div>
+        <span class="fl-topbar-title">MyLyfe Umbria</span>
+        <span class="fl-topbar-version">v${getVersion()}</span>
       </div>
-      <button class="btn btn-secondary" id="logout-btn">
-        Logout
-      </button>
-    </div>
-    
-    <div class="admin-nav">
-      <button class="admin-nav-btn active" data-section="home">
-        🏠 My Home
-      </button>
-      <button class="admin-nav-btn" data-section="journey">
-        🗺️ My Journey
-      </button>
-      <button class="admin-nav-btn" data-section="taste">
-        🍷 My Taste
-      </button>
-      <button class="admin-nav-btn" data-section="ui-config">
-        🎨 Configurazione UI
-      </button>
-    </div>
-    
-    <div id="admin-content" class="admin-content">
-      <!-- Contenuto dinamico -->
+      <div class="fl-topbar-right">
+        <button class="fl-button fl-button-sm fl-topbar-logout" id="logout-btn"><i class="ph ph-sign-out"></i> Esci</button>
+      </div>
+    </header>
+
+    <!-- Shell: sidebar + main -->
+    <div class="fl-admin-shell">
+
+      <!-- Sidebar -->
+      <nav class="fl-sidebar">
+        <div class="fl-sidebar-nav">
+          ${navItems.map((item, i) => {
+            if (item.section === 'divider') return '<div class="fl-sidebar-divider"></div>';
+            const isFirst = item.section === 'dashboard';
+            return `<button class="fl-sidebar-item${isFirst ? ' active' : ''}" data-section="${item.section}">
+              <span class="fl-sidebar-icon">${item.icon}</span>
+              <span>${item.label}</span>
+            </button>`;
+          }).join('')}
+        </div>
+
+        <div class="fl-sidebar-footer">
+          <div class="fl-user-avatar">${initials}</div>
+          <span class="fl-user-email">${user.email}</span>
+        </div>
+      </nav>
+
+      <!-- Main content -->
+      <div class="fl-admin-main">
+        <div id="admin-content" class="fl-admin-content">
+          <div class="fl-loader"><div class="fl-spinner"></div> Caricamento...</div>
+        </div>
+      </div>
+
     </div>
   `;
-  
-  // Gestisci logout
+
+  // Logout
   container.querySelector('#logout-btn').addEventListener('click', async () => {
     await authService.logout();
     router.navigate('/admin/login');
   });
-  
-  // Gestisci navigazione sezioni
-  const navButtons = container.querySelectorAll('.admin-nav-btn');
+
+  // Navigazione sezioni (Sidebar)
+  const sidebarItems = container.querySelectorAll('.fl-sidebar-item');
   const contentArea = container.querySelector('#admin-content');
-  
-  navButtons.forEach(btn => {
+
+  sidebarItems.forEach(btn => {
     btn.addEventListener('click', async () => {
-      // Aggiorna stato attivo
-      navButtons.forEach(b => b.classList.remove('active'));
+      sidebarItems.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      
-      // Carica sezione
+
       const section = btn.dataset.section;
-      contentArea.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
-      
+      contentArea.innerHTML = '<div class="fl-loader"><div class="fl-spinner"></div> Caricamento...</div>';
+
       const sectionContent = await renderAdminSection(section);
       contentArea.innerHTML = '';
       contentArea.appendChild(sectionContent);
     });
   });
-  
-  // Carica sezione iniziale
-  const initialSection = await renderAdminSection('home');
+
+  // Carica dashboard iniziale
+  const initialSection = await renderAdminSection('dashboard');
+  contentArea.innerHTML = '';
   contentArea.appendChild(initialSection);
-  
+
   return container;
+}
+
+// Dashboard con KPI
+async function renderDashboard() {
+  const dash = document.createElement('div');
+  dash.className = 'fl-dashboard';
+
+  const kpiSections = [
+    { section: 'home',    icon: '<i class="ph ph-house"></i>',         label: 'My Home',    color: '#6da34d', sub: 'Contenuti homepage', key: 'home' },
+    { section: 'journey', icon: '<i class="ph ph-map-trifold"></i>',  label: 'Itinerari',  color: '#548687', sub: 'My Journey',         key: 'journey' },
+    { section: 'taste',   icon: '<i class="ph ph-fork-knife"></i>',   label: 'Ristoranti', color: '#c97c3a', sub: 'My Taste',           key: 'taste' },
+    { section: 'events',  icon: '<i class="ph ph-calendar-dots"></i>',label: 'Eventi',     color: '#5b7ec9', sub: 'My Events',          key: 'events' },
+  ];
+
+  // KPI Grid (skeleton loading)
+  const kpiWrap = document.createElement('div');
+  kpiWrap.innerHTML = `<div class="fl-kpi-section-title">Riepilogo contenuti</div>`;
+  const kpiGrid = document.createElement('div');
+  kpiGrid.className = 'fl-kpi-grid';
+
+  kpiSections.forEach(k => {
+    const card = document.createElement('div');
+    card.className = 'fl-kpi-card fl-kpi-card-loading';
+    card.dataset.section = k.section;
+    card.innerHTML = `
+      <div class="fl-kpi-card-top">
+        <div class="fl-kpi-icon">${k.icon}</div>
+        <span class="fl-kpi-badge">–</span>
+      </div>
+      <div class="fl-kpi-value">–</div>
+      <div class="fl-kpi-label">${k.label}</div>
+      <div class="fl-kpi-sub">${k.sub}</div>
+    `;
+    kpiGrid.appendChild(card);
+  });
+
+  kpiWrap.appendChild(kpiGrid);
+  dash.appendChild(kpiWrap);
+
+  // Activity card (placeholder)
+  const activityCard = document.createElement('div');
+  activityCard.className = 'fl-activity-card';
+  activityCard.innerHTML = `
+    <div class="fl-activity-header"><i class="ph ph-list-checks"></i> Sezioni piattaforma</div>
+    ${kpiSections.map(k => `
+      <div class="fl-activity-row" style="cursor:pointer" data-goto="${k.section}">
+        <div class="fl-activity-dot" style="background:${k.color}"></div>
+        <span class="fl-activity-text"><strong>${k.label}</strong> — ${k.sub}</span>
+        <span class="fl-activity-count" data-count="${k.section}">…</span>
+      </div>
+    `).join('')}
+  `;
+  dash.appendChild(activityCard);
+
+  // Click su riga activity → naviga alla sezione
+  activityCard.querySelectorAll('[data-goto]').forEach(row => {
+    row.addEventListener('click', () => {
+      const section = row.dataset.goto;
+      const btn = document.querySelector(`.fl-sidebar-item[data-section="${section}"]`);
+      if (btn) btn.click();
+    });
+  });
+
+  // Click su kpi card → naviga alla sezione
+  kpiGrid.querySelectorAll('.fl-kpi-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const section = card.dataset.section;
+      const btn = document.querySelector(`.fl-sidebar-item[data-section="${section}"]`);
+      if (btn) btn.click();
+    });
+  });
+
+  // Carica i conteggi async
+  (async () => {
+    const counts = {};
+    await Promise.allSettled(kpiSections.map(async k => {
+      try {
+        const snap = await getDocs(collection(db, k.key));
+        counts[k.key] = snap.size;
+      } catch { counts[k.key] = 0; }
+    }));
+
+    kpiSections.forEach(k => {
+      const count = counts[k.key] ?? 0;
+      const card = kpiGrid.querySelector(`[data-section="${k.section}"]`);
+      if (card) {
+        card.classList.remove('fl-kpi-card-loading');
+        card.querySelector('.fl-kpi-value').textContent = count;
+        card.querySelector('.fl-kpi-badge').textContent = count + ' elementi';
+      }
+      const actRow = activityCard.querySelector(`[data-count="${k.section}"]`);
+      if (actRow) actRow.textContent = count;
+    });
+  })();
+
+  return dash;
 }
 
 // Render sezione admin
 async function renderAdminSection(section) {
   const container = document.createElement('div');
-  container.className = 'admin-section';
-  
+  container.className = 'fl-section';
+
+  // Dashboard
+  if (section === 'dashboard') {
+    return await renderDashboard();
+  }
+
   // Sezione speciale per configurazione UI
   if (section === 'ui-config') {
     return await renderUIConfigSection();
   }
-  
+
   // Carica dati
   let data = [];
   let collectionName = section;
-  
+
   try {
     if (section === 'home') {
       data = await firebaseService.getHomeData();
@@ -101,106 +352,144 @@ async function renderAdminSection(section) {
       data = await firebaseService.getJourneyData();
     } else if (section === 'taste') {
       data = await firebaseService.getTasteData();
+    } else if (section === 'events') {
+      console.log('📅 Caricamento eventi per admin panel...');
+      data = await firebaseService.getEventsData();
+      console.log(`📊 Caricati ${data.length} eventi:`, data);
     }
   } catch (error) {
-    console.error('Errore caricamento dati:', error);
+    console.error('❌ Errore caricamento dati:', error);
+    const errorMsg = document.createElement('div');
+    errorMsg.className = 'fl-message-bar fl-message-error';
+    errorMsg.style.cssText = 'margin: 1.5rem;';
+    errorMsg.innerHTML = `<strong>Errore caricamento dati:</strong> ${error.message}`;
+    container.appendChild(errorMsg);
   }
-  
+
   // Header sezione
   const header = document.createElement('div');
-  header.className = 'admin-section-header';
+  header.className = 'fl-section-header';
   header.innerHTML = `
-    <h3>${getSectionTitle(section)}</h3>
-    <button class="btn btn-primary" data-action="add" data-collection="${collectionName}">
-      ➕ Aggiungi Nuovo
+    <div>
+      <h3 class="fl-section-title">${getSectionTitle(section)}</h3>
+      <p class="fl-section-subtitle">${data.length} element${data.length === 1 ? 'o' : 'i'}</p>
+    </div>
+    <button class="fl-button fl-button-primary" data-action="add" data-collection="${collectionName}">
+      <i class="ph ph-plus"></i> Aggiungi
     </button>
   `;
   container.appendChild(header);
   
-  // Lista items
-  const list = document.createElement('div');
-  list.className = 'admin-items-list';
-  
+  // Data grid
+  const grid = document.createElement('div');
+  grid.className = 'fl-data-grid fl-grid-cols-list';
+
+  // Grid header row
+  const gridHead = document.createElement('div');
+  gridHead.className = 'fl-grid-head';
+  gridHead.innerHTML = `
+    <div class="fl-grid-th"></div>
+    <div class="fl-grid-th">Titolo</div>
+    <div class="fl-grid-th">Descrizione / Categoria</div>
+    <div class="fl-grid-th" style="text-align:right">Azioni</div>
+  `;
+  grid.appendChild(gridHead);
+
+  const gridBody = document.createElement('div');
+  gridBody.className = 'fl-grid-body';
+
   if (data.length === 0) {
-    list.innerHTML = '<p class="empty-message">Nessun elemento presente</p>';
+    gridBody.innerHTML = `
+      <div class="fl-empty-state">
+        <div class="fl-empty-icon"><i class="ph ph-tray"></i></div>
+        <p class="fl-empty-title">Nessun elemento</p>
+        <p class="fl-empty-desc">Aggiungi il primo elemento cliccando il pulsante in alto a destra.</p>
+      </div>`;
   } else {
     data.forEach(item => {
-      list.appendChild(createAdminItem(item, collectionName));
+      gridBody.appendChild(createAdminItem(item, collectionName));
     });
   }
-  
-  container.appendChild(list);
-  
+
+  grid.appendChild(gridBody);
+  container.appendChild(grid);
+
   // Gestisci click aggiungi
   header.querySelector('[data-action="add"]').addEventListener('click', (e) => {
-    const collection = e.target.dataset.collection;
-    showEditModal(null, collection);
+    const coll = e.currentTarget.dataset.collection;
+    showEditModal(null, coll);
   });
-  
+
   return container;
 }
 
-// Crea item nella lista admin
+// Crea riga nella data grid admin
 function createAdminItem(item, collection) {
-  const div = document.createElement('div');
-  div.className = 'admin-item';
-  
+  const row = document.createElement('div');
+  row.className = 'fl-grid-row';
+
   const title = i18n.tm(item.titolo) || item.id;
   const desc = i18n.tm(item.descrizione) || i18n.tm(item.categoria) || '';
-  
-  div.innerHTML = `
-    <div class="admin-item-content">
-      <h4>${title}</h4>
-      <p>${desc.substring(0, 100)}${desc.length > 100 ? '...' : ''}</p>
-      <span class="admin-item-id">ID: ${item.id}</span>
+  const descTruncated = desc.substring(0, 80) + (desc.length > 80 ? '…' : '');
+  const initials = title.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+
+  row.innerHTML = `
+    <div class="fl-grid-td">
+      <div class="fl-item-avatar">${initials}</div>
     </div>
-    <div class="admin-item-actions">
-      <button class="btn btn-sm btn-secondary" data-action="edit">
-        ✏️ Modifica
-      </button>
-      <button class="btn btn-sm btn-danger" data-action="delete">
-        🗑️ Elimina
-      </button>
+    <div class="fl-grid-td fl-td-title">${title}</div>
+    <div class="fl-grid-td fl-td-secondary">${descTruncated}</div>
+    <div class="fl-grid-td">
+      <div class="fl-grid-actions">
+        <button class="fl-icon-button" data-action="edit" title="Modifica"><i class="ph ph-pencil-simple"></i></button>
+        <button class="fl-icon-button fl-icon-button-danger" data-action="delete" title="Elimina"><i class="ph ph-trash"></i></button>
+      </div>
     </div>
   `;
   
   // Gestisci modifica
-  div.querySelector('[data-action="edit"]').addEventListener('click', () => {
+  row.querySelector('[data-action="edit"]').addEventListener('click', () => {
     showEditModal(item, collection);
   });
-  
+
   // Gestisci eliminazione
-  div.querySelector('[data-action="delete"]').addEventListener('click', async () => {
-    if (confirm(`Sei sicuro di voler eliminare "${title}"?`)) {
+  row.querySelector('[data-action="delete"]').addEventListener('click', async () => {
+    if (confirm(`Eliminare "${title}"?`)) {
       await deleteItem(item.id, collection);
     }
   });
-  
-  return div;
+
+  return row;
 }
 
-// Mostra modal di modifica
+// Mostra dialog di modifica (Fluent UI Dialog)
 function showEditModal(item, collection) {
   const isNew = !item;
   const modal = document.createElement('div');
-  modal.className = 'modal-overlay';
-  
+  modal.className = 'fl-dialog-overlay';
+
   modal.innerHTML = `
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>${isNew ? '➕ Aggiungi' : '✏️ Modifica'} ${getSectionTitle(collection)}</h3>
-        <button class="modal-close">✕</button>
+    <div class="fl-dialog" role="dialog" aria-modal="true">
+      <div class="fl-dialog-header">
+        <div class="fl-dialog-title-wrap">
+          <h3 class="fl-dialog-title">
+            ${isNew ? '<i class="ph ph-plus"></i> Aggiungi' : '<i class="ph ph-pencil-simple"></i> Modifica'} ${getSectionTitle(collection)}
+          </h3>
+          <p class="fl-dialog-subtitle">
+            ${isNew ? 'Compila i campi per creare un nuovo elemento' : `Modifica elemento: ${item.id}`}
+          </p>
+        </div>
+        <button class="fl-dialog-close" aria-label="Chiudi">✕</button>
       </div>
-      
-      <form id="edit-form" class="admin-form">
-        ${createFormFields(item, collection)}
-        
-        <div class="modal-actions">
-          <button type="button" class="btn btn-secondary" data-action="cancel">
-            Annulla
-          </button>
-          <button type="submit" class="btn btn-primary">
-            ${isNew ? 'Crea' : 'Salva'}
+
+      <form id="edit-form">
+        <div class="fl-dialog-body">
+          ${createFormFields(item, collection)}
+        </div>
+        <div class="fl-dialog-footer">
+          <button type="button" class="fl-button fl-button-secondary" data-action="cancel">Annulla</button>
+          <button type="submit" class="fl-button fl-button-primary">
+            ${isNew ? 'Crea elemento' : 'Salva modifiche'}
           </button>
         </div>
       </form>
@@ -208,13 +497,29 @@ function showEditModal(item, collection) {
   `;
   
   document.body.appendChild(modal);
-  
+
   // Gestisci chiusura
   const closeModal = () => modal.remove();
-  modal.querySelector('.modal-close').addEventListener('click', closeModal);
+  modal.querySelector('.fl-dialog-close').addEventListener('click', closeModal);
   modal.querySelector('[data-action="cancel"]').addEventListener('click', closeModal);
+  
+  // Chiudi modal solo se si clicca sul backdrop e non si sta selezionando testo
+  let isSelecting = false;
+  modal.addEventListener('mousedown', (e) => {
+    if (e.target === modal) {
+      isSelecting = false;
+    }
+  });
+  modal.addEventListener('mousemove', (e) => {
+    if (window.getSelection().toString().length > 0) {
+      isSelecting = true;
+    }
+  });
   modal.addEventListener('click', (e) => {
-    if (e.target === modal) closeModal();
+    if (e.target === modal && !isSelecting) {
+      closeModal();
+    }
+    isSelecting = false;
   });
   
   // Gestisci submit
@@ -234,55 +539,203 @@ function showEditModal(item, collection) {
     
     const formData = new FormData(form);
     await saveItem(formData, item, collection);
+    
+    // Invalida cache categorie se journey o taste o events
+    if (collection === 'journey' || collection === 'taste' || collection === 'events') {
+      invalidateCategoriesCache(collection);
+    }
+    
     closeModal();
   });
   
-  // Inizializza editor HTML dopo che il modal è nel DOM
-  setTimeout(() => {
+  // Inizializza editor HTML e autocomplete dopo che il modal è nel DOM
+  setTimeout(async () => {
     initHTMLEditor(modal);
+    await initCategoryAutocomplete(modal, collection);
   }, 0);
 }
 
-// Inizializza editor HTML
-function initHTMLEditor(modal) {
-  const toolbar = modal.querySelector('.html-editor-toolbar');
-  const editors = modal.querySelectorAll('.html-editor-content');
+// Inizializza autocomplete categorie
+async function initCategoryAutocomplete(modal, collection) {
+  const autocompleteInputs = modal.querySelectorAll('.autocomplete-input');
   
-  if (!toolbar || editors.length === 0) return;
+  if (autocompleteInputs.length === 0) return;
   
-  let currentEditor = null;
+  // Carica categorie esistenti
+  const categories = await getExistingCategories(collection);
   
-  // Focus tracking per sapere quale editor è attivo
-  editors.forEach(editor => {
-    editor.addEventListener('focus', () => {
-      currentEditor = editor;
+  autocompleteInputs.forEach(input => {
+    const wrapper = input.closest('.fl-autocomplete-wrap');
+    const dropdown = wrapper.querySelector('.autocomplete-dropdown');
+    const lang = input.dataset.lang;
+    const langCategories = categories[lang] || [];
+    
+    let selectedIndex = -1;
+    
+    // Mostra dropdown al focus
+    input.addEventListener('focus', () => {
+      if (langCategories.length > 0) {
+        showDropdown(input, dropdown, langCategories, '');
+      }
+    });
+    
+    // Filtra mentre si digita
+    input.addEventListener('input', () => {
+      const value = input.value.toLowerCase().trim();
+      const filtered = langCategories.filter(cat => 
+        cat.toLowerCase().includes(value)
+      );
+      
+      selectedIndex = -1;
+      showDropdown(input, dropdown, filtered, value);
+    });
+    
+    // Gestisci navigazione con tastiera
+    input.addEventListener('keydown', (e) => {
+      const items = dropdown.querySelectorAll('.fl-autocomplete-item');
+      
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+        updateSelection(items, selectedIndex);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        selectedIndex = Math.max(selectedIndex - 1, -1);
+        updateSelection(items, selectedIndex);
+      } else if (e.key === 'Enter' && selectedIndex >= 0) {
+        e.preventDefault();
+        items[selectedIndex].click();
+      } else if (e.key === 'Escape') {
+        dropdown.style.display = 'none';
+      }
+    });
+    
+    // Nascondi dropdown quando si clicca fuori
+    document.addEventListener('click', (e) => {
+      if (!wrapper.contains(e.target)) {
+        dropdown.style.display = 'none';
+      }
     });
   });
+}
+
+// Mostra dropdown autocomplete (Fluent UI style)
+function showDropdown(input, dropdown, items, searchTerm) {
+  if (items.length === 0) {
+    dropdown.style.display = 'none';
+    return;
+  }
   
-  // Gestisci pulsanti toolbar
-  toolbar.querySelectorAll('.toolbar-btn').forEach(btn => {
+  const collection = input.dataset.collection;
+  const lang = input.dataset.lang;
+  
+  dropdown.innerHTML = '';
+  
+  items.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'fl-autocomplete-item';
+
+    // Contenitore per testo
+    const textSpan = document.createElement('span');
+    
+    // Evidenzia il testo cercato
+    if (searchTerm) {
+      const regex = new RegExp(`(${searchTerm})`, 'gi');
+      textSpan.innerHTML = item.replace(regex, '<strong>$1</strong>');
+    } else {
+      textSpan.textContent = item;
+    }
+    
+    // Pulsante elimina
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'fl-autocomplete-del';
+    deleteBtn.innerHTML = '✕';
+    deleteBtn.title = 'Elimina questa categoria';
+    deleteBtn.type = 'button';
+    
+    deleteBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      
+      if (confirm(`Sei sicuro di voler eliminare la categoria "${item}"?\nQuesta azione rimuoverà la categoria da tutti gli elementi che la utilizzano.`)) {
+        try {
+          await deleteCategoryFromAll(collection, lang, item);
+          
+          // Rimuovi dalla UI
+          div.remove();
+          
+          // Se non ci sono più item, nascondi dropdown
+          if (dropdown.children.length === 0) {
+            dropdown.style.display = 'none';
+          }
+          
+          // Aggiorna il modal corrente
+          const modal = input.closest('.fl-dialog-overlay');
+          if (modal) {
+            // Refresh del form per ricaricare le categorie
+            invalidateCategoriesCache(collection);
+          }
+        } catch (error) {
+          console.error('Errore eliminazione categoria:', error);
+          alert('Errore durante l\'eliminazione della categoria');
+        }
+      }
+    });
+    
+    // Click sul testo seleziona la categoria
+    textSpan.addEventListener('click', () => {
+      input.value = item;
+      dropdown.style.display = 'none';
+      input.focus();
+    });
+    
+    div.appendChild(textSpan);
+    div.appendChild(deleteBtn);
+    dropdown.appendChild(div);
+  });
+  
+  dropdown.style.display = 'block';
+}
+
+// Aggiorna selezione nella dropdown
+function updateSelection(items, selectedIndex) {
+  items.forEach((item, index) => {
+    if (index === selectedIndex) {
+      item.classList.add('selected');
+      item.scrollIntoView({ block: 'nearest' });
+    } else {
+      item.classList.remove('selected');
+    }
+  });
+}
+
+// Inizializza editor HTML (aggiornato per Fluent classes)
+function initHTMLEditor(modal) {
+  const toolbar = modal.querySelector('.fl-html-toolbar');
+  const editors = modal.querySelectorAll('.html-editor-content');
+
+  if (!toolbar || editors.length === 0) return;
+
+  let currentEditor = null;
+
+  editors.forEach(editor => {
+    editor.addEventListener('focus', () => { currentEditor = editor; });
+  });
+
+  toolbar.querySelectorAll('.fl-toolbar-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
       const command = btn.dataset.command;
-      
-      if (!currentEditor) {
-        currentEditor = editors[0];
-      }
-      
+      if (!currentEditor) currentEditor = editors[0];
       currentEditor.focus();
-      
       if (command === 'createLink') {
         const url = prompt('Inserisci URL:');
-        if (url) {
-          document.execCommand(command, false, url);
-        }
+        if (url) document.execCommand(command, false, url);
       } else {
         document.execCommand(command, false, null);
       }
     });
   });
-  
-  // Previeni paste di HTML non sicuro per tutti gli editor
+
   editors.forEach(editor => {
     editor.addEventListener('paste', (e) => {
       e.preventDefault();
@@ -292,245 +745,209 @@ function initHTMLEditor(modal) {
   });
 }
 
-// Crea campi del form
+// Crea campi del form (Fluent UI)
 function createFormFields(item, collection) {
+  const languages = ['it', 'en', 'fr', 'de', 'es'];
+
+  const field = (label, inputHtml, hintHtml = '') => `
+    <div class="fl-form-group">
+      <label class="fl-label">${label}</label>
+      ${inputHtml}
+      ${hintHtml ? `<p class="fl-hint">${hintHtml}</p>` : ''}
+    </div>`;
+
+  const multiLangField = (label, name, type = 'input', hint = '', required = 'it', extraAttrs = (l) => '') => {
+    let html = `<div class="fl-form-group">
+      <label class="fl-label">${label}</label>
+      <div class="fl-multilang-group">`;
+    languages.forEach(lang => {
+      const isRequired = lang === required;
+      const value = item?.[name]?.[lang] || '';
+      const badge = `<span class="fl-lang-badge${isRequired ? ' fl-lang-required' : ''}">${lang}</span>`;
+      if (type === 'textarea') {
+        html += `<div class="fl-lang-row">${badge}<textarea
+          class="fl-textarea"
+          name="${name}_${lang}"
+          placeholder="${lang.toUpperCase()}"
+          rows="2"
+          ${isRequired ? 'required' : ''}
+          ${extraAttrs(lang)}
+        >${value}</textarea></div>`;
+      } else {
+        html += `<div class="fl-lang-row">${badge}<input
+          class="fl-input"
+          type="text"
+          name="${name}_${lang}"
+          placeholder="${lang.toUpperCase()}"
+          value="${value}"
+          ${isRequired ? 'required' : ''}
+          ${extraAttrs(lang)}
+        ></div>`;
+      }
+    });
+    html += `</div>${hint ? `<p class="fl-hint">${hint}</p>` : ''}</div>`;
+    return html;
+  };
+
   let fields = `
-    <div class="form-group">
-      <label>ID Documento</label>
-      <input type="text" name="id" value="${item?.id || ''}" required ${item ? 'readonly' : ''}>
-      <small>Identificativo univoco (es: wifi, orvieto, lapalomba)</small>
+    <div class="fl-form-section">
+      <p class="fl-form-section-title">Identificativo</p>
+      ${field('ID Documento', `<input class="fl-input${item ? ' fl-input' : ''}" type="text" name="id" value="${item?.id || ''}" required ${item ? 'readonly' : ''}>`,
+        'Identificativo univoco (es: wifi, orvieto, lapalomba)')}
+    </div>
+
+    <div class="fl-form-section">
+      <p class="fl-form-section-title">Contenuto multilingua</p>
+      ${multiLangField('Titolo', 'titolo', 'input', '')}
+      ${multiLangField('Descrizione', 'descrizione', 'textarea', '')}
     </div>
   `;
-  
-  // Campi comuni
-  const languages = ['it', 'en', 'fr', 'de', 'es'];
-  
-  // Titolo multilingua
-  fields += '<div class="form-group-multi"><label>Titolo</label>';
-  languages.forEach(lang => {
-    const value = item?.titolo?.[lang] || '';
-    fields += `
-      <input 
-        type="text" 
-        name="titolo_${lang}" 
-        placeholder="${lang.toUpperCase()}" 
-        value="${value}"
-        required
-      >
-    `;
-  });
-  fields += '</div>';
-  
-  // Descrizione multilingua
-  fields += '<div class="form-group-multi"><label>Descrizione</label>';
-  languages.forEach(lang => {
-    const value = item?.descrizione?.[lang] || '';
-    fields += `
-      <textarea 
-        name="descrizione_${lang}" 
-        placeholder="${lang.toUpperCase()}" 
-        rows="3"
-        required
-      >${value}</textarea>
-    `;
-  });
-  fields += '</div>';
-  
-  // Campi specifici per collezione
-  if (collection === 'home') {
-    fields += `
-      <div class="form-group">
-        <label>Immagine</label>
-        ${item?.imgUrl ? `
-          <div class="current-image">
-            <img src="${item.imgUrl}" alt="Immagine attuale" style="max-width: 200px; border-radius: 8px; margin-bottom: 0.5rem;">
-            <p style="font-size: 0.9rem; color: #7f8c8d;">Immagine corrente</p>
-          </div>
-        ` : ''}
-        <input type="file" name="image" accept="image/*" id="image-upload">
-        <small>Carica un'immagine (JPG, PNG, max 5MB) - opzionale</small>
-      </div>
-      <div class="form-group">
-        <label>Icona</label>
-        <input type="text" name="icona" value="${item?.icona || ''}" placeholder="wifi, pool, key">
-        <small>Icona emoji/SVG - usata solo se non c'è un'immagine</small>
-      </div>
-      <div class="form-group">
-        <label>Link Google Maps</label>
-        <input type="url" name="mapsUrl" value="${item?.mapsUrl || ''}" placeholder="https://maps.google.com/?q=...">
-      </div>
-    `;
-  }
-  
-  if (collection === 'journey' || collection === 'taste') {
-    // Categoria multilingua
-    fields += '<div class="form-group-multi"><label>Categoria</label>';
+
+  // Categoria con autocomplete
+  if (collection === 'journey' || collection === 'taste' || collection === 'events') {
+    let catHtml = `<div class="fl-form-group">
+      <label class="fl-label">Categoria</label>
+      <p class="fl-hint" style="margin-bottom:6px">Seleziona da categorie esistenti o digita una nuova</p>
+      <div class="fl-multilang-group">`;
     languages.forEach(lang => {
       const value = item?.categoria?.[lang] || '';
-      fields += `
-        <input 
-          type="text" 
-          name="categoria_${lang}" 
-          placeholder="${lang.toUpperCase()}" 
-          value="${value}"
-        >
-      `;
+      catHtml += `<div class="fl-lang-row">
+        <span class="fl-lang-badge${lang === 'it' ? ' fl-lang-required' : ''}">${lang}</span>
+        <div class="fl-autocomplete-wrap" data-lang="${lang}" data-field="categoria" style="flex:1">
+          <input class="fl-input autocomplete-input" type="text"
+            name="categoria_${lang}"
+            placeholder="${lang.toUpperCase()}"
+            value="${value}"
+            autocomplete="off"
+            data-collection="${collection}"
+            data-lang="${lang}"
+            ${lang === 'it' ? 'required' : ''}
+          >
+          <div class="fl-autocomplete-dropdown autocomplete-dropdown" style="display:none;"></div>
+        </div>
+      </div>`;
     });
-    fields += '</div>';
+    catHtml += '</div></div>';
+    fields += `<div class="fl-form-section"><p class="fl-form-section-title">Categoria</p>${catHtml}</div>`;
   }
-  
+
+  // Campi specifici
+
+  if (collection === 'home') {
+    fields += `<div class="fl-form-section"><p class="fl-form-section-title">Dettagli</p>
+      <div class="fl-form-group">
+        <label class="fl-label">Immagine</label>
+        ${item?.imgUrl ? `<div class="fl-image-preview" style="margin-bottom:8px"><img class="fl-preview-thumb" src="${item.imgUrl}" alt="Immagine"></div>` : ''}
+        <label class="fl-file-label"><input class="fl-file-input" type="file" name="image" accept="image/*" id="image-upload">📎 Scegli immagine</label>
+        <p class="fl-hint">JPG, PNG, max 5MB — opzionale</p>
+      </div>
+      ${field('Icona', `<input class="fl-input" type="text" name="icona" value="${item?.icona || ''}" placeholder="wifi, pool, key">`,
+        'Usata solo se non c\'è un\'immagine')}
+      ${field('Link Google Maps', `<input class="fl-input" type="url" name="mapsUrl" value="${item?.mapsUrl || ''}" placeholder="https://maps.google.com/?q=...">`)}</div>`;
+  }
+
   if (collection === 'journey') {
-    fields += `
-      <div class="form-group">
-        <label>Immagine del Luogo</label>
-        ${item?.imgUrl ? `
-          <div class="current-image">
-            <img src="${item.imgUrl}" alt="Immagine attuale" style="max-width: 200px; border-radius: 8px; margin-bottom: 0.5rem;">
-            <p style="font-size: 0.9rem; color: #7f8c8d;">Immagine corrente</p>
-          </div>
-        ` : ''}
-        <input type="file" name="image" accept="image/*" id="image-upload">
-        <small>Carica una nuova immagine (JPG, PNG, max 5MB)</small>
+    fields += `<div class="fl-form-section"><p class="fl-form-section-title">Dettagli itinerario</p>
+      <div class="fl-form-group">
+        <label class="fl-label">Immagine</label>
+        ${item?.imgUrl ? `<div class="fl-image-preview" style="margin-bottom:8px"><img class="fl-preview-thumb" src="${item.imgUrl}" alt="Immagine"></div>` : ''}
+        <label class="fl-file-label"><input class="fl-file-input" type="file" name="image" accept="image/*" id="image-upload">📎 Scegli immagine</label>
+        <p class="fl-hint">JPG, PNG, max 5MB</p>
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>Distanza</label>
-          <input type="text" name="distanza" value="${item?.distanza || ''}" placeholder="25 km">
-        </div>
-        <div class="form-group">
-          <label>Durata</label>
-          <input type="text" name="durata" value="${item?.durata || ''}" placeholder="30 min">
-        </div>
+      <div class="fl-form-row">
+        ${field('Distanza', `<input class="fl-input" type="text" name="distanza" value="${item?.distanza || ''}" placeholder="25 km">`)}
+        ${field('Durata', `<input class="fl-input" type="text" name="durata" value="${item?.durata || ''}" placeholder="30 min">`)}
       </div>
-      <div class="form-group">
-        <label>Link Google Maps</label>
-        <input type="url" name="mapsUrl" value="${item?.mapsUrl || ''}" placeholder="https://maps.google.com/?q=...">
-      </div>
-      <div class="form-group">
-        <label>
-          <input type="checkbox" name="featured" ${item?.featured ? 'checked' : ''}>
-          In evidenza
-        </label>
-      </div>
-    `;
+      ${field('Link Google Maps', `<input class="fl-input" type="url" name="mapsUrl" value="${item?.mapsUrl || ''}" placeholder="https://maps.google.com/?q=...">`)}
+      <label class="fl-checkbox-wrap">
+        <input class="fl-checkbox" type="checkbox" name="featured" ${item?.featured ? 'checked' : ''}>
+        <span class="fl-checkbox-label">In evidenza</span>
+      </label></div>`;
   }
-  
+
   if (collection === 'taste') {
-    fields += `
-      <div class="form-group">
-        <label>Immagine del Ristorante</label>
-        ${item?.imgUrl ? `
-          <div class="current-image">
-            <img src="${item.imgUrl}" alt="Immagine attuale" style="max-width: 200px; border-radius: 8px; margin-bottom: 0.5rem;">
-            <p style="font-size: 0.9rem; color: #7f8c8d;">Immagine corrente</p>
-          </div>
-        ` : ''}
-        <input type="file" name="image" accept="image/*" id="image-upload">
-        <small>Carica una nuova immagine (JPG, PNG, max 5MB)</small>
+    fields += `<div class="fl-form-section"><p class="fl-form-section-title">Dettagli ristorante</p>
+      <div class="fl-form-group">
+        <label class="fl-label">Immagine</label>
+        ${item?.imgUrl ? `<div class="fl-image-preview" style="margin-bottom:8px"><img class="fl-preview-thumb" src="${item.imgUrl}" alt="Immagine"></div>` : ''}
+        <label class="fl-file-label"><input class="fl-file-input" type="file" name="image" accept="image/*" id="image-upload">📎 Scegli immagine</label>
+        <p class="fl-hint">JPG, PNG, max 5MB</p>
       </div>
-    `;
-    
-    fields += '<div class="form-group-multi"><label>Tipo Cucina</label>';
-    languages.forEach(lang => {
-      const value = item?.tipoCucina?.[lang] || '';
-      fields += `
-        <input 
-          type="text" 
-          name="tipoCucina_${lang}" 
-          placeholder="${lang.toUpperCase()}" 
-          value="${value}"
-        >
-      `;
-    });
-    fields += '</div>';
-    
-    fields += `
-      <div class="form-group">
-        <label>Telefono</label>
-        <input type="tel" name="telefono" value="${item?.telefono || ''}" placeholder="+39 ...">
-      </div>
-      <div class="form-group">
-        <label>Link Google Maps</label>
-        <input type="url" name="mapsUrl" value="${item?.mapsUrl || ''}" placeholder="https://maps.google.com/?q=...">
-      </div>
-    `;
-    
-    fields += '<div class="form-group-multi"><label>Prezzo Medio</label>';
-    languages.forEach(lang => {
-      const value = item?.prezzoMedio?.[lang] || '';
-      fields += `
-        <input 
-          type="text" 
-          name="prezzoMedio_${lang}" 
-          placeholder="${lang.toUpperCase()}" 
-          value="${value}"
-        >
-      `;
-    });
-    fields += '</div>';
-    
-    fields += `
-      <div class="form-group">
-        <label>
-          <input type="checkbox" name="featured" ${item?.featured ? 'checked' : ''}>
-          In evidenza
-        </label>
-      </div>
-    `;
+      ${multiLangField('Tipo Cucina', 'tipoCucina')}
+      ${field('Telefono', `<input class="fl-input" type="tel" name="telefono" value="${item?.telefono || ''}" placeholder="+39 ...">`)}
+      ${field('Link Google Maps', `<input class="fl-input" type="url" name="mapsUrl" value="${item?.mapsUrl || ''}" placeholder="https://maps.google.com/?q=...">`)}
+      ${multiLangField('Prezzo Medio', 'prezzoMedio', 'input', '', 'none')}
+      <label class="fl-checkbox-wrap">
+        <input class="fl-checkbox" type="checkbox" name="featured" ${item?.featured ? 'checked' : ''}>
+        <span class="fl-checkbox-label">In evidenza</span>
+      </label></div>`;
   }
-  
-  // Campo Note con editor HTML multilingua (comune a tutte le sezioni)
-  fields += '<div class="form-group-multi"><label>Note / Dettagli (Multilingua)</label>';
-  fields += '<div class="html-editor-toolbar">';
-  fields += '<button type="button" class="toolbar-btn" data-command="bold" title="Grassetto"><strong>B</strong></button>';
-  fields += '<button type="button" class="toolbar-btn" data-command="italic" title="Corsivo"><em>I</em></button>';
-  fields += '<button type="button" class="toolbar-btn" data-command="insertUnorderedList" title="Elenco puntato">• Lista</button>';
-  fields += '<button type="button" class="toolbar-btn" data-command="insertOrderedList" title="Elenco numerato">1. Lista</button>';
-  fields += '<button type="button" class="toolbar-btn" data-command="createLink" title="Inserisci link">🔗 Link</button>';
-  fields += '</div>';
-  
-  languages.forEach(lang => {
-    const value = item?.notes?.[lang] || '';
-    fields += `
-      <div class="lang-editor-group">
-        <label class="lang-label">${lang.toUpperCase()}</label>
-        <div 
-          class="html-editor-content" 
-          contenteditable="true" 
-          data-lang="${lang}"
-          data-field="notes"
-          style="min-height: 120px; border: 1px solid #ddd; border-radius: 4px; padding: 12px; margin-bottom: 0.5rem; background: white;"
-        >${value}</div>
-        <input type="hidden" name="notes_${lang}" class="notes-hidden-${lang}">
+
+  if (collection === 'events') {
+    fields += `<div class="fl-form-section"><p class="fl-form-section-title">Dettagli evento</p>
+      <div class="fl-form-group">
+        <label class="fl-label">Immagine</label>
+        ${item?.imgUrl ? `<div class="fl-image-preview" style="margin-bottom:8px"><img class="fl-preview-thumb" src="${item.imgUrl}" alt="Immagine"></div>` : ''}
+        <label class="fl-file-label"><input class="fl-file-input" type="file" name="image" accept="image/*" id="image-upload">📎 Scegli immagine</label>
+        <p class="fl-hint">JPG, PNG, max 5MB</p>
       </div>
-    `;
-  });
-  fields += '<small>Inserisci dettagli, informazioni turistiche, suggerimenti. Puoi formattare il testo e aggiungere link per ogni lingua.</small>';
-  fields += '</div>';
-  
-  fields += `
-    <div class="form-group">
-      <label>Guida PDF</label>
-      ${item?.pdfUrl ? `
-        <div class="current-file">
-          <p style="margin-bottom: 0.5rem;">
-            📄 <a href="${item.pdfUrl}" target="_blank" style="color: #6da34d;">Guida corrente</a>
-          </p>
-        </div>
-      ` : ''}
-      <input type="file" name="pdf" accept=".pdf,application/pdf" id="pdf-upload">
-      <small>Carica una guida in PDF (max 10MB) - opzionale</small>
+      <div class="fl-form-row">
+        ${field('Data Evento <span style="color:var(--fl-error)">*</span>',
+          `<input class="fl-input" type="date" name="dataEvento" value="${item?.dataEvento || ''}" required>`)}
+        ${field('Ora Evento',
+          `<input class="fl-input" type="time" name="oraEvento" value="${item?.oraEvento || ''}">`)}
+      </div>
+      ${field('Luogo', `<input class="fl-input" type="text" name="luogoEvento" value="${item?.luogoEvento || ''}" placeholder="Perugia, Piazza IV Novembre">`)}
+      ${field('Link Google Maps', `<input class="fl-input" type="url" name="mapsUrl" value="${item?.mapsUrl || ''}" placeholder="https://maps.google.com/?q=...">`)}
+      ${field('Sito Web', `<input class="fl-input" type="url" name="sitoWeb" value="${item?.sitoWeb || ''}" placeholder="https://...">`)}
+      <label class="fl-checkbox-wrap">
+        <input class="fl-checkbox" type="checkbox" name="featured" ${item?.featured ? 'checked' : ''}>
+        <span class="fl-checkbox-label">In evidenza</span>
+      </label></div>`;
+  }
+
+  // Note HTML multilingua
+  fields += `<div class="fl-form-section">
+    <p class="fl-form-section-title">Note / Dettagli multilingua</p>
+    <div class="fl-form-group">
+      <label class="fl-label">Testo formattato</label>
+      <div class="fl-html-toolbar html-editor-toolbar">
+        <button type="button" class="fl-toolbar-btn toolbar-btn" data-command="bold"><strong>B</strong></button>
+        <button type="button" class="fl-toolbar-btn toolbar-btn" data-command="italic"><em>I</em></button>
+        <button type="button" class="fl-toolbar-btn toolbar-btn" data-command="insertUnorderedList">• Lista</button>
+        <button type="button" class="fl-toolbar-btn toolbar-btn" data-command="insertOrderedList">1. Lista</button>
+        <button type="button" class="fl-toolbar-btn toolbar-btn" data-command="createLink">🔗 Link</button>
+      </div>
+      <div class="fl-multilang-group" style="margin-top:0">
+        ${languages.map(lang => `
+          <div class="fl-lang-row" style="align-items:flex-start">
+            <span class="fl-lang-badge" style="margin-top:6px">${lang}</span>
+            <div style="flex:1">
+              <div class="fl-html-editor html-editor-content"
+                contenteditable="true"
+                data-lang="${lang}"
+                data-field="notes"
+              >${item?.notes?.[lang] || ''}</div>
+              <input type="hidden" name="notes_${lang}" class="notes-hidden-${lang}">
+            </div>
+          </div>`).join('')}
+      </div>
+      <p class="fl-hint">Formatta testo e aggiungi link per ogni lingua</p>
     </div>
-  `;
-  
-  // Ordine
-  fields += `
-    <div class="form-group">
-      <label>Ordine</label>
-      <input type="number" name="ordine" value="${item?.ordine || 1}" min="1">
+  </div>`;
+
+  // PDF
+  fields += `<div class="fl-form-section">
+    <p class="fl-form-section-title">Risorse</p>
+    <div class="fl-form-group">
+      <label class="fl-label">Guida PDF</label>
+      ${item?.pdfUrl ? `<p style="margin-bottom:8px;font-size:13px">📄 <a href="${item.pdfUrl}" target="_blank" style="color:var(--fl-brand)">Guida corrente</a></p>` : ''}
+      <label class="fl-file-label"><input class="fl-file-input" type="file" name="pdf" accept=".pdf,application/pdf" id="pdf-upload">📎 Scegli PDF</label>
+      <p class="fl-hint">Max 10MB — opzionale</p>
     </div>
-  `;
-  
+    ${field('Ordine', `<input class="fl-input" type="number" name="ordine" value="${item?.ordine || 1}" min="1" style="width:100px">`)}
+  </div>`;
+
   return fields;
 }
 
@@ -647,10 +1064,20 @@ async function saveItem(formData, existingItem, collection) {
   });
   
   // Altri campi
-  ['icona', 'distanza', 'durata', 'mapsUrl', 'telefono'].forEach(field => {
+  ['icona', 'distanza', 'durata', 'mapsUrl', 'telefono', 'dataEvento', 'oraEvento', 'luogoEvento', 'sitoWeb'].forEach(field => {
     const value = formData.get(field);
     if (value) data[field] = value;
   });
+  
+  // Aggiungi datainserimento per eventi (se nuovo o non esiste già)
+  if (collection === 'events') {
+    if (!existingItem || !existingItem.datainserimento) {
+      data.datainserimento = new Date().toISOString();
+    } else {
+      // Mantieni la data di inserimento originale
+      data.datainserimento = existingItem.datainserimento;
+    }
+  }
   
   // Checkbox
   data.featured = formData.get('featured') === 'on';
@@ -659,13 +1086,40 @@ async function saveItem(formData, existingItem, collection) {
   }
   
   try {
+    // Determina se è un nuovo elemento
+    const isNewItem = !existingItem;
+    
     await setDoc(doc(db, collection, id), data);
     console.log('✅ Item salvato:', id);
-    alert('Salvato con successo!');
+    
+    // Invia notifica push se è un nuovo evento
+    if (collection === 'events' && isNewItem) {
+      console.log('📱 Tentativo invio notifica push per nuovo evento...');
+      try {
+        const notificationResult = await sendNotificationForNewEvent({
+          id: id,
+          ...data
+        });
+        
+        if (notificationResult.success) {
+          console.log('✅ Notifica programmata:', notificationResult.message);
+          alert(`Salvato con successo!\n\n📱 ${notificationResult.message}`);
+        } else {
+          console.warn('⚠️ Notifica non inviata:', notificationResult.error);
+          alert(`Salvato con successo!\n\n⚠️ Notifica non inviata: ${notificationResult.error || 'Configura FCM per abilitare le notifiche'}`);
+        }
+      } catch (notifError) {
+        console.error('❌ Errore sistema notifiche:', notifError);
+        alert(`Salvato con successo!\n\n⚠️ Sistema notifiche non disponibile (${notifError.message})`);
+      }
+    } else {
+      alert('Salvato con successo!');
+    }
+    
     // Ricarica solo il dashboard admin senza reload completo
     const adminContent = document.querySelector('#admin-content');
     if (adminContent) {
-      adminContent.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+      adminContent.innerHTML = '<div class="fl-loader"><div class="fl-spinner"></div> Caricamento...</div>';
       const sectionContent = await renderAdminSection(collection);
       adminContent.innerHTML = '';
       adminContent.appendChild(sectionContent);
@@ -685,7 +1139,7 @@ async function deleteItem(id, collection) {
     // Ricarica solo il dashboard admin senza reload completo
     const adminContent = document.querySelector('#admin-content');
     if (adminContent) {
-      adminContent.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+      adminContent.innerHTML = '<div class="fl-loader"><div class="fl-spinner"></div> Caricamento...</div>';
       const sectionContent = await renderAdminSection(collection);
       adminContent.innerHTML = '';
       adminContent.appendChild(sectionContent);
@@ -702,6 +1156,7 @@ function getSectionTitle(section) {
     home: 'My Home',
     journey: 'My Journey',
     taste: 'My Taste',
+    events: 'My Events',
     'ui-config': 'Configurazione UI'
   };
   return titles[section] || section;
@@ -711,149 +1166,259 @@ function getSectionTitle(section) {
 
 async function renderUIConfigSection() {
   const container = document.createElement('div');
-  container.className = 'ui-config-section';
-  
+  container.className = 'fl-section';
+
   // Carica configurazione corrente
   const config = await uiConfigService.loadConfig();
-  
+
+  const colorSwatches = [
+    { label: 'Colore Primario (Verde)',  name: 'color-primary',      val: config.colors.primary },
+    { label: 'Colore Secondario (Viola)',name: 'color-secondary',     val: config.colors.secondary },
+    { label: 'Colore Accento (Salvia)',  name: 'color-accent',        val: config.colors.accent },
+    { label: 'Colore Teal',             name: 'color-teal',          val: config.colors.teal },
+    { label: 'Verde Chiaro',            name: 'color-light-green',   val: config.colors.lightGreen },
+    { label: 'Sfondo',                  name: 'color-background',    val: config.colors.background },
+  ];
+
+  const langs = [
+    { code: 'it', label: 'Italiano' }, { code: 'en', label: 'English' },
+    { code: 'fr', label: 'Français' }, { code: 'de', label: 'Deutsch' },
+    { code: 'es', label: 'Español'  },
+  ];
+
+  const multiLang = (baseName, values) => langs.map(l => `
+    <div class="fl-lang-row">
+      <span class="fl-lang-badge${l.code === 'it' ? ' fl-lang-required' : ''}">${l.code}</span>
+      <input class="fl-input" type="text" name="${baseName}-${l.code}" placeholder="${l.label}" value="${values?.[l.code] || ''}">
+    </div>`).join('');
+
   container.innerHTML = `
-    <div class="ui-config-header">
-      <h3>🎨 Configurazione UI</h3>
-      <p>Personalizza colori, logo, nome app e testi dell'interfaccia</p>
+    <div class="fl-section-header">
+      <div>
+        <h3 class="fl-section-title">Configurazione UI</h3>
+        <p class="fl-section-subtitle">Personalizza colori, branding e testi dell'interfaccia</p>
+      </div>
     </div>
-    
-    <form id="ui-config-form" class="ui-config-form">
+
+    <form id="ui-config-form">
       <!-- PALETTE COLORI -->
-      <div class="config-section">
+      <div class="fl-config-section">
         <h4>🎨 Palette Colori</h4>
-        <p class="section-desc">Modifica i colori principali dell'interfaccia</p>
-        
-        <div class="color-grid">
-          <div class="color-input-group">
-            <label>Colore Primario (Verde)</label>
-            <input type="color" name="color-primary" value="${config.colors.primary}">
-            <input type="text" name="color-primary-text" value="${config.colors.primary}" pattern="^#[0-9A-Fa-f]{6}$">
-          </div>
-          
-          <div class="color-input-group">
-            <label>Colore Secondario (Viola)</label>
-            <input type="color" name="color-secondary" value="${config.colors.secondary}">
-            <input type="text" name="color-secondary-text" value="${config.colors.secondary}" pattern="^#[0-9A-Fa-f]{6}$">
-          </div>
-          
-          <div class="color-input-group">
-            <label>Colore Accento (Salvia)</label>
-            <input type="color" name="color-accent" value="${config.colors.accent}">
-            <input type="text" name="color-accent-text" value="${config.colors.accent}" pattern="^#[0-9A-Fa-f]{6}$">
-          </div>
-          
-          <div class="color-input-group">
-            <label>Colore Teal</label>
-            <input type="color" name="color-teal" value="${config.colors.teal}">
-            <input type="text" name="color-teal-text" value="${config.colors.teal}" pattern="^#[0-9A-Fa-f]{6}$">
-          </div>
-          
-          <div class="color-input-group">
-            <label>Verde Chiaro</label>
-            <input type="color" name="color-light-green" value="${config.colors.lightGreen}">
-            <input type="text" name="color-light-green-text" value="${config.colors.lightGreen}" pattern="^#[0-9A-Fa-f]{6}$">
-          </div>
-          
-          <div class="color-input-group">
-            <label>Sfondo</label>
-            <input type="color" name="color-background" value="${config.colors.background}">
-            <input type="text" name="color-background-text" value="${config.colors.background}" pattern="^#[0-9A-Fa-f]{6}$">
-          </div>
+        <p class="fl-config-section-desc">Modifica i colori principali dell'interfaccia</p>
+        <div class="fl-config-grid" style="margin-top:12px">
+          ${colorSwatches.map(s => `
+            <div class="fl-color-swatch">
+              <input class="fl-color-preview" type="color" name="${s.name}" value="${s.val}">
+              <div class="fl-color-inputs">
+                <span class="fl-color-name">${s.label}</span>
+                <input class="fl-color-hex" type="text" name="${s.name}-text" value="${s.val}" pattern="^#[0-9A-Fa-f]{6}$">
+              </div>
+            </div>`).join('')}
         </div>
       </div>
-      
+
       <!-- BRANDING -->
-      <div class="config-section">
+      <div class="fl-config-section">
         <h4>🏷️ Branding</h4>
-        <p class="section-desc">Nome dell'app e slogan (multilingua)</p>
-        
-        <div class="branding-inputs">
-          <h5>Nome App</h5>
-          <div class="multilang-inputs">
-            <input type="text" name="app-name-it" placeholder="Italiano" value="${config.branding.appName.it}">
-            <input type="text" name="app-name-en" placeholder="English" value="${config.branding.appName.en}">
-            <input type="text" name="app-name-fr" placeholder="Français" value="${config.branding.appName.fr}">
-            <input type="text" name="app-name-de" placeholder="Deutsch" value="${config.branding.appName.de}">
-            <input type="text" name="app-name-es" placeholder="Español" value="${config.branding.appName.es}">
+        <p class="fl-config-section-desc">Nome dell'app, logo e immagini</p>
+
+        <div class="fl-form-group" style="margin-top:12px">
+          <label class="fl-label">Nome App</label>
+          <div class="fl-multilang-group">${multiLang('app-name', config.branding.appName)}</div>
+        </div>
+
+        <div class="fl-form-group">
+          <label class="fl-label">Slogan / Tagline</label>
+          <div class="fl-multilang-group">${multiLang('app-tagline', config.branding.appTagline)}</div>
+        </div>
+
+        <div class="fl-form-group">
+          <label class="fl-label">Logo App</label>
+          <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap">
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="file" id="logo-upload" accept="image/*" class="fl-file-input">
+              <button type="button" class="fl-button fl-button-secondary fl-button-sm" id="logo-upload-btn">📤 Carica Logo</button>
+              ${config.branding.logoUrl ? `<button type="button" class="fl-button fl-button-danger fl-button-sm" id="remove-logo-btn">✕ Rimuovi</button>` : ''}
+            </div>
+            ${config.branding.logoUrl
+              ? `<img src="${config.branding.logoUrl}" style="height:56px;border-radius:8px;border:1px solid var(--fl-stroke-1);background:#fff;padding:6px">`
+              : `<p class="fl-hint" style="margin:0">Nessun logo — verrà usato il logo SVG di default.</p>`}
           </div>
-          
-          <h5>Slogan / Tagline</h5>
-          <div class="multilang-inputs">
-            <input type="text" name="app-tagline-it" placeholder="Italiano" value="${config.branding.appTagline.it}">
-            <input type="text" name="app-tagline-en" placeholder="English" value="${config.branding.appTagline.en}">
-            <input type="text" name="app-tagline-fr" placeholder="Français" value="${config.branding.appTagline.fr}">
-            <input type="text" name="app-tagline-de" placeholder="Deutsch" value="${config.branding.appTagline.de}">
-            <input type="text" name="app-tagline-es" placeholder="Español" value="${config.branding.appTagline.es}">
+        </div>
+
+        <div class="fl-form-group">
+          <label class="fl-label">Sfondo Header</label>
+          <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap">
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="file" id="header-bg-upload" accept="image/*" class="fl-file-input">
+              <button type="button" class="fl-button fl-button-secondary fl-button-sm" id="header-bg-upload-btn">📤 Carica Sfondo</button>
+              ${config.branding.headerBackgroundUrl ? `<button type="button" class="fl-button fl-button-danger fl-button-sm" id="remove-header-bg-btn">✕ Rimuovi</button>` : ''}
+            </div>
+            ${config.branding.headerBackgroundUrl
+              ? `<img src="${config.branding.headerBackgroundUrl}" style="height:56px;border-radius:8px;border:1px solid var(--fl-stroke-1)">`
+              : `<p class="fl-hint" style="margin:0">Nessuno sfondo — verrà usato il gradiente di default.</p>`}
           </div>
         </div>
       </div>
-      
+
       <!-- TESTI HOMEPAGE -->
-      <div class="config-section">
+      <div class="fl-config-section">
         <h4>🏠 Testi Homepage</h4>
-        <p class="section-desc">Testi che appaiono nella homepage</p>
-        
-        <div class="branding-inputs">
-          <h5>Sottotitolo Benvenuto</h5>
-          <div class="multilang-inputs">
-            <input type="text" name="welcome-subtitle-it" placeholder="Italiano" value="${config.homeTexts.welcomeSubtitle.it}">
-            <input type="text" name="welcome-subtitle-en" placeholder="English" value="${config.homeTexts.welcomeSubtitle.en}">
-            <input type="text" name="welcome-subtitle-fr" placeholder="Français" value="${config.homeTexts.welcomeSubtitle.fr}">
-            <input type="text" name="welcome-subtitle-de" placeholder="Deutsch" value="${config.homeTexts.welcomeSubtitle.de}">
-            <input type="text" name="welcome-subtitle-es" placeholder="Español" value="${config.homeTexts.welcomeSubtitle.es}">
+        <p class="fl-config-section-desc">Testi visibili nella homepage</p>
+        <div class="fl-form-group" style="margin-top:12px">
+          <label class="fl-label">Sottotitolo Benvenuto</label>
+          <div class="fl-multilang-group">${multiLang('welcome-subtitle', config.homeTexts.welcomeSubtitle)}</div>
+        </div>
+      </div>
+
+      <!-- FOOTER -->
+      <div class="fl-config-section">
+        <h4>📄 Footer</h4>
+        <p class="fl-config-section-desc">Testi del piè di pagina</p>
+        <div class="fl-form-row" style="margin-top:12px">
+          <div class="fl-form-group">
+            <label class="fl-label">Copyright</label>
+            <input class="fl-input" type="text" name="footer-copyright" placeholder="Nome copyright" value="${config.footer.copyright}">
+          </div>
+          <div class="fl-form-group">
+            <label class="fl-label">Anno</label>
+            <input class="fl-input" type="text" name="footer-year" placeholder="2024" value="${config.footer.year}" style="max-width:120px">
           </div>
         </div>
       </div>
-      
-      <!-- FOOTER -->
-      <div class="config-section">
-        <h4>📄 Footer</h4>
-        <p class="section-desc">Testi del piè di pagina</p>
-        
-        <div class="branding-inputs">
-          <h5>Copyright</h5>
-          <input type="text" name="footer-copyright" placeholder="Nome copyright" value="${config.footer.copyright}">
-          
-          <h5>Anno</h5>
-          <input type="text" name="footer-year" placeholder="Anno" value="${config.footer.year}">
+
+      <!-- CONTATTI -->
+      <div class="fl-config-section">
+        <h4>📞 Contatti</h4>
+        <p class="fl-config-section-desc">Numero di telefono ed email per MyContacts</p>
+        <div class="fl-form-row" style="margin-top:12px">
+          <div class="fl-form-group">
+            <label class="fl-label">Telefono</label>
+            <input class="fl-input" type="tel" name="contacts-phone" placeholder="+39 391 755 7924" value="${config.contacts?.phone || '+393917557924'}">
+            <p class="fl-hint">Usato per chiamate e WhatsApp. Es: +39xxxxxxxxxx</p>
+          </div>
+          <div class="fl-form-group">
+            <label class="fl-label">Email</label>
+            <input class="fl-input" type="email" name="contacts-email" placeholder="info@example.com" value="${config.contacts?.email || ''}">
+          </div>
         </div>
       </div>
-      
-      <!-- PULSANTI AZIONE -->
-      <div class="ui-config-actions">
-        <button type="button" class="btn btn-secondary" id="preview-config-btn">
-          👁️ Anteprima
-        </button>
-        <button type="submit" class="btn btn-primary">
-          💾 Salva e Applica
-        </button>
-        <button type="button" class="btn btn-secondary" id="reset-config-btn">
-          ↩️ Ripristina Default
-        </button>
+
+      <!-- AZIONI -->
+      <div class="fl-config-actions">
+        <button type="button" class="fl-button fl-button-subtle" id="reset-config-btn">↩️ Ripristina Default</button>
+        <button type="button" class="fl-button fl-button-secondary" id="preview-config-btn">👁️ Anteprima</button>
+        <button type="submit" class="fl-button fl-button-primary">💾 Salva e Applica</button>
       </div>
     </form>
   `;
   
-  // Sincronizza color picker con text input
-  container.querySelectorAll('.color-input-group').forEach(group => {
-    const colorInput = group.querySelector('input[type="color"]');
-    const textInput = group.querySelector('input[type="text"]');
-    
-    colorInput.addEventListener('input', () => {
-      textInput.value = colorInput.value;
+  // Sincronizza color picker con hex input
+  container.querySelectorAll('.fl-color-swatch').forEach(swatch => {
+    const colorInput = swatch.querySelector('input[type="color"]');
+    const textInput = swatch.querySelector('.fl-color-hex');
+    if (!colorInput || !textInput) return;
+    colorInput.addEventListener('input', () => { textInput.value = colorInput.value; });
+    textInput.addEventListener('input', () => { if (textInput.checkValidity()) colorInput.value = textInput.value; });
+  });
+  
+  // Gestisci upload logo
+  const logoUploadBtn = container.querySelector('#logo-upload-btn');
+  const logoUploadInput = container.querySelector('#logo-upload');
+  if (logoUploadBtn && logoUploadInput) {
+    logoUploadBtn.addEventListener('click', () => {
+      logoUploadInput.click();
     });
     
-    textInput.addEventListener('input', () => {
-      if (textInput.checkValidity()) {
-        colorInput.value = textInput.value;
+    logoUploadInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        try {
+          logoUploadBtn.disabled = true;
+          logoUploadBtn.innerHTML = '<span class="fl-spinner" style="width:14px;height:14px;border-width:2px"></span> Caricamento...';
+          
+          const downloadURL = await uiConfigService.uploadLogo(file);
+          
+          // Aggiorna configurazione
+          const currentConfig = uiConfigService.getConfig();
+          currentConfig.branding.logoUrl = downloadURL;
+          currentConfig.branding.logoType = 'image';
+          await uiConfigService.saveConfig(currentConfig);
+          
+          alert('✅ Logo caricato! Ricaricare la sezione per vedere le modifiche.');
+          renderSection('ui-config');
+        } catch (error) {
+          alert('❌ Errore nel caricamento del logo: ' + error.message);
+        } finally {
+          logoUploadBtn.disabled = false;
+          logoUploadBtn.textContent = '📤 Carica Logo';
+        }
       }
     });
-  });
+  }
+  
+  // Gestisci rimozione logo
+  const removeLogoBtn = container.querySelector('#remove-logo-btn');
+  if (removeLogoBtn) {
+    removeLogoBtn.addEventListener('click', async () => {
+      if (confirm('Vuoi rimuovere il logo personalizzato?')) {
+        const currentConfig = uiConfigService.getConfig();
+        currentConfig.branding.logoUrl = null;
+        currentConfig.branding.logoType = 'svg';
+        await uiConfigService.saveConfig(currentConfig);
+        alert('✅ Logo rimosso!');
+        renderSection('ui-config');
+      }
+    });
+  }
+  
+  // Gestisci upload sfondo header
+  const headerBgUploadBtn = container.querySelector('#header-bg-upload-btn');
+  const headerBgUploadInput = container.querySelector('#header-bg-upload');
+  if (headerBgUploadBtn && headerBgUploadInput) {
+    headerBgUploadBtn.addEventListener('click', () => {
+      headerBgUploadInput.click();
+    });
+    
+    headerBgUploadInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        try {
+          headerBgUploadBtn.disabled = true;
+          headerBgUploadBtn.innerHTML = '<span class="fl-spinner" style="width:14px;height:14px;border-width:2px"></span> Caricamento...';
+          
+          const downloadURL = await uiConfigService.uploadHeaderBackground(file);
+          
+          // Aggiorna configurazione
+          const currentConfig = uiConfigService.getConfig();
+          currentConfig.branding.headerBackgroundUrl = downloadURL;
+          await uiConfigService.saveConfig(currentConfig);
+          
+          alert('✅ Sfondo header caricato! Ricaricare la sezione per vedere le modifiche.');
+          renderSection('ui-config');
+        } catch (error) {
+          alert('❌ Errore nel caricamento dello sfondo: ' + error.message);
+        } finally {
+          headerBgUploadBtn.disabled = false;
+          headerBgUploadBtn.textContent = '📤 Carica Sfondo';
+        }
+      }
+    });
+  }
+  
+  // Gestisci rimozione sfondo header
+  const removeHeaderBgBtn = container.querySelector('#remove-header-bg-btn');
+  if (removeHeaderBgBtn) {
+    removeHeaderBgBtn.addEventListener('click', async () => {
+      if (confirm('Vuoi rimuovere lo sfondo personalizzato della testata?')) {
+        const currentConfig = uiConfigService.getConfig();
+        currentConfig.branding.headerBackgroundUrl = null;
+        await uiConfigService.saveConfig(currentConfig);
+        alert('✅ Sfondo rimosso!');
+        renderSection('ui-config');
+      }
+    });
+  }
   
   // Gestisci submit form
   const form = container.querySelector('#ui-config-form');
@@ -880,6 +1445,9 @@ async function renderUIConfigSection() {
 // Salva configurazione UI
 async function saveUIConfig(form) {
   const formData = new FormData(form);
+  
+  // Ottieni configurazione corrente per preservare le immagini
+  const currentConfig = uiConfigService.getConfig();
   
   const config = {
     colors: {
@@ -909,9 +1477,11 @@ async function saveUIConfig(form) {
         de: formData.get('app-tagline-de'),
         es: formData.get('app-tagline-es')
       },
-      logoType: 'svg',
-      logoUrl: null,
-      logoSvg: null
+      // Preserva le immagini dalla configurazione corrente
+      logoType: currentConfig.branding?.logoType || 'svg',
+      logoUrl: currentConfig.branding?.logoUrl || null,
+      logoSvg: currentConfig.branding?.logoSvg || null,
+      headerBackgroundUrl: currentConfig.branding?.headerBackgroundUrl || null
     },
     homeTexts: {
       welcomeTitle: {
@@ -946,6 +1516,10 @@ async function saveUIConfig(form) {
         de: 'für',
         es: 'para'
       }
+    },
+    contacts: {
+      phone: formData.get('contacts-phone'),
+      email: formData.get('contacts-email')
     }
   };
   

@@ -318,6 +318,14 @@ export async function renderMyAssistantPage() {
   `;
   
   // Setup event listeners
+
+  ## 📌 Campi consigliati per i documenti (ricerca)
+
+  - `keywords` (array, minuscole senza accenti): parole chiave per il matching rapido, es. `['orvieto','ristorante','pizza']`
+  - `locations` (array): localita'/aree supportate, es. `['orvieto']`
+  - `ordine` (number): per ordinamento coerente dei risultati
+  - Campi testo (`titolo`, `descrizione`): usati come fallback nel filtraggio locale
+
   setupChatbot(container);
   
   return container;
@@ -779,18 +787,22 @@ Vai su `http://localhost:5173/#/assistant` e prova:
 - ✅ "Cosa visitare"
 - ✅ "Password Wi-Fi"
 
-**Gemini AI (Intelligente):**
-- 🤖 "Qual è il posto migliore per vedere il tramonto?"
-- 🤖 "Dove posso portare i bambini?"
-- 🤖 "Quanto dista Assisi?"
-- 🤖 "Consigli per una cena romantica"
+**Esempi Avanzati (Pattern Matching):**
+- ✅ "Dove mangiare a Orvieto"
+- ✅ "Ristoranti consigliati"
+- ✅ "Cosa visitare"
+- ✅ "Password Wi-Fi"
+- ✅ "Luoghi vicino al casale"
+- ✅ "Cantine per degustazione"
+- ✅ "Dove portare i bambini"
+- ✅ "Quanto dista Assisi"
 
 ### 8.3 Verifica Console
 
 Apri DevTools (F12) e controlla:
 - ✅ Nessun errore nella console
 - ✅ Chiamate Firebase funzionanti
-- ✅ Cache Gemini attiva (log "Using cached response")
+- ✅ Cache locale attiva (se implementata)
 
 ---
 
@@ -872,10 +884,9 @@ firebase deploy
 **Soluzione:**
 1. Verifica `createCard()` in `components.js`
 2. Controlla CSS caricato correttamente
-3. Verifica struttura dati item
+1. Verifica struttura dati item
 
-- [ ] API Key Gemini ottenuta
-- [ ] `.env` creato e configurato
+- [ ] `.env` creato e configurato (solo se aggiungi integrazioni esterne)
 - [ ] `.gitignore` aggiornato
 - [ ] Miglioramenti Futuri (Opzionali)
 

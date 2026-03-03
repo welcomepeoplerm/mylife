@@ -4,6 +4,7 @@ import { i18n } from './i18n.js';
 import { router } from './router.js';
 import { getSectorIcon } from './icons.js';
 import { uiConfigService } from './ui-config-service.js';
+import { getVersion } from './version.js';
 
 // Crea il menu di navigazione principale
 export function createMainMenu() {
@@ -35,12 +36,20 @@ export function createMainMenu() {
         <span class="menu-desc">${i18n.t('myTasteDesc')}</span>
       </button>
       
-      <button class="menu-item" data-route="/assistant" data-sector="assistant">
+      <button class="menu-item" data-route="/events" data-sector="events">
         <div class="menu-icon-wrapper">
-          ${getSectorIcon('assistant')}
+          ${getSectorIcon('events')}
         </div>
-        <span class="menu-title">Oliver</span>
-        <span class="menu-desc">${i18n.t('myAssistantDesc')}</span>
+        <span class="menu-title">${i18n.t('myEvents')}</span>
+        <span class="menu-desc">${i18n.t('myEventsDesc')}</span>
+      </button>
+      
+      <button class="menu-item" data-route="/assistant" data-sector="contacts">
+        <div class="menu-icon-wrapper">
+          ${getSectorIcon('contacts')}
+        </div>
+        <span class="menu-title">MyContacts</span>
+        <span class="menu-desc">${i18n.t('myContactsDesc')}</span>
       </button>
     </div>
   `;
@@ -117,6 +126,12 @@ export function createHeader() {
   const appName = config.branding?.appName?.[currentLang] || i18n.t('appName');
   const appTagline = config.branding?.appTagline?.[currentLang] || i18n.t('appTagline');
   
+  // Verifica se c'è un'immagine di sfondo personalizzata
+  const headerBgUrl = config.branding?.headerBackgroundUrl;
+  const headerBgStyle = headerBgUrl 
+    ? `background: url('${headerBgUrl}') center/cover no-repeat;` 
+    : '';
+  
   header.innerHTML = `
     <div class="header-content">
       <div class="header-left">
@@ -124,9 +139,12 @@ export function createHeader() {
           ← ${i18n.t('back')}
         </button>
       </div>
-      <div class="header-center has-bg">
+      <div class="header-center has-bg" style="${headerBgStyle}">
         <div class="title-row" style="display: flex; align-items: center; justify-content: center; gap: 15px;">
           <div class="app-logo">
+            ${config.branding.logoType === 'image' && config.branding.logoUrl ? `
+              <img src="${config.branding.logoUrl}" alt="Logo" style="width: 80px; height: 80px; object-fit: contain; border-radius: 8px;">
+            ` : `
             <svg viewBox="0 0 200 200" class="logo-svg" style="width: 80px; height: 80px;">
               <defs>
                 <linearGradient id="logoGradientHeader" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -142,9 +160,10 @@ export function createHeader() {
               <circle cx="150" cy="60" r="18" fill="#ffd700"/>
               <path d="M 20 140 Q 50 135 80 140 T 140 140 T 180 140 L 180 160 L 20 160 Z" fill="white" opacity="0.6"/>
             </svg>
+            `}
           </div>
           <div class="title-text">
-            <h1 class="app-title">${appName}</h1>
+            <h1 class="app-title">${appName} <span style="font-size: 0.5em; opacity: 0.7;">v${getVersion()}</span></h1>
             <p class="app-tagline">${appTagline}</p>
           </div>
         </div>
@@ -171,6 +190,8 @@ export function createHeader() {
         router.navigate('/journey');
       } else if (currentRoute.startsWith('/taste/detail/')) {
         router.navigate('/taste');
+      } else if (currentRoute.startsWith('/events/detail/')) {
+        router.navigate('/events');
       } else {
         router.navigate('/');
       }
@@ -267,6 +288,36 @@ export function createCard(item, type = 'default') {
           ${item.pdfUrl ? `
             <a href="${item.pdfUrl}" target="_blank" class="btn btn-secondary" download>
               📄 Scarica Guida PDF
+            </a>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  } else if (type === 'events') {
+    // Formatta data e ora
+    const eventDate = item.dataEvento ? new Date(item.dataEvento).toLocaleDateString(i18n.getCurrentLanguage()) : '';
+    const eventTime = item.oraEvento || '';
+    
+    card.innerHTML = `
+      ${item.imgUrl ? `<img src="${item.imgUrl}" alt="${i18n.tm(item.titolo)}" class="card-image clickable">` : ''}
+      <div class="card-content">
+        <div class="card-header">
+          <h3 class="card-title clickable">${i18n.tm(item.titolo)}</h3>
+          <span class="card-category">${i18n.tm(item.categoria)}</span>
+        </div>
+        <p class="card-description">${i18n.tm(item.descrizione)}</p>
+        ${eventDate ? `<p class="card-info">📅 ${i18n.t('eventDate')}: ${eventDate}</p>` : ''}
+        ${eventTime ? `<p class="card-info">🕐 ${i18n.t('eventTime')}: ${eventTime}</p>` : ''}
+        ${item.luogoEvento ? `<p class="card-info">📍 ${i18n.t('eventLocation')}: ${item.luogoEvento}</p>` : ''}
+        <div class="card-actions">
+          ${item.mapsUrl ? `
+            <a href="${item.mapsUrl}" target="_blank" class="btn btn-primary">
+              🗺️ ${i18n.t('openMap')}
+            </a>
+          ` : ''}
+          ${item.sitoWeb ? `
+            <a href="${item.sitoWeb}" target="_blank" class="btn btn-secondary">
+              🌐 ${i18n.t('website')}
             </a>
           ` : ''}
         </div>

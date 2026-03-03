@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" width="200" height="200">
+  <!-- Logo MyLyfe - Umbria -->
+  <!-- Logo circolare con stilizzazione montagne, sole e onde -->
+  
+  <defs>
+    <!-- Gradiente verde principale -->
+    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6da34d;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#c5e99b;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Gradiente sole -->
+    <linearGradient id="sunGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8d9c71;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#c5e99b;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Cerchio esterno di sfondo -->
+  <circle cx="100" cy="100" r="95" fill="url(#logoGradient)" opacity="0.1"/>
+  
+  <!-- Cerchio bianco centrale -->
+  <circle cx="100" cy="100" r="85" fill="white"/>
+  
+  <!-- Montagne stilizzate (tre montagne sovrapposte) -->
+  <path d="M 30 130 L 60 80 L 90 130 Z" fill="url(#logoGradient)" opacity="0.7"/>
+  <path d="M 70 130 L 100 70 L 130 130 Z" fill="url(#logoGradient)"/>
+  <path d="M 110 130 L 140 90 L 170 130 Z" fill="url(#logoGradient)" opacity="0.7"/>
+  
+  <!-- Sole -->
+  <circle cx="150" cy="60" r="18" fill="url(#sunGradient)"/>
+  
+  <!-- Onde/colline verdi (due livelli) -->
+  <path d="M 20 140 Q 50 135 80 140 T 140 140 T 180 140 L 180 160 L 20 160 Z" 
+        fill="#c5e99b" opacity="0.6"/>
+  <path d="M 20 150 Q 60 145 100 150 T 180 150 L 180 170 L 20 170 Z" 
+        fill="#6da34d" opacity="0.4"/>
+  
+  <!-- Testo circolare MyLyfe -->
+  <path id="circlePath" d="M 100,30 A 70,70 0 1,1 99.9,30" fill="none"/>
+  <text font-size="14" fill="#3d6b2a" font-weight="600">
+    <textPath href="#circlePath" startOffset="15%">
+      MYLYFE
+    </textPath>
+  </text>
+</svg>

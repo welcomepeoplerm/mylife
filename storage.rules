@@ -7,6 +7,13 @@ service firebase.storage {
       allow read: if true;
     }
     
+    // Immagini per la configurazione UI (logo, header background)
+    match /config/{imageId} {
+      allow write: if request.auth != null 
+                   && request.resource.size < 5 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+    
     // Consenti scrittura solo agli utenti autenticati
     // Immagini per My Home
     match /home/{imageId} {
@@ -45,6 +52,20 @@ service firebase.storage {
     
     // PDF per My Taste
     match /taste/{allFiles=**} {
+      allow write: if request.auth != null 
+                   && request.resource.size < 10 * 1024 * 1024
+                   && (request.resource.contentType.matches('image/.*') || request.resource.contentType == 'application/pdf');
+    }
+    
+    // Immagini per My Events
+    match /events/{imageId} {
+      allow write: if request.auth != null 
+                   && request.resource.size < 5 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+    
+    // PDF per My Events
+    match /events/{allFiles=**} {
       allow write: if request.auth != null 
                    && request.resource.size < 10 * 1024 * 1024
                    && (request.resource.contentType.matches('image/.*') || request.resource.contentType == 'application/pdf');

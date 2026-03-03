@@ -12,7 +12,7 @@ class UIConfigService {
       // Palette colori
       colors: {
         primary: '#6da34d',      // Verde
-        secondary: '#56445d',    // Viola scuro
+        secondary: '#3d6b2a',    // Verde scuro
         accent: '#8d9c71',       // Verde oliva/salvia
         teal: '#548687',         // Teal
         lightGreen: '#c5e99b',   // Verde chiaro
@@ -40,8 +40,9 @@ class UIConfigService {
           es: 'Tu guía personal en Umbría'
         },
         logoType: 'svg', // 'svg' o 'image'
-        logoUrl: null,    // URL per immagini custom
-        logoSvg: null     // SVG custom
+        logoUrl: null,    // URL per logo custom (splash screen e homepage)
+        logoSvg: null,    // SVG custom
+        headerBackgroundUrl: null  // URL per immagine di sfondo header
       },
       
       // Testi homepage
@@ -80,6 +81,12 @@ class UIConfigService {
           de: 'für',
           es: 'para'
         }
+      },
+      
+      // Contacts
+      contacts: {
+        phone: '+393917557924',
+        email: 'gozzolif@gmail.com'
       }
     };
   }
@@ -173,6 +180,23 @@ class UIConfigService {
       return downloadURL;
     } catch (error) {
       console.error('❌ Errore nel caricamento logo:', error);
+      throw error;
+    }
+  }
+  
+  // Upload immagine di sfondo header
+  async uploadHeaderBackground(file) {
+    try {
+      const timestamp = Date.now();
+      const storageRef = ref(storage, `config/header-bg-${timestamp}`);
+      
+      await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(storageRef);
+      
+      console.log('✅ Sfondo header caricato:', downloadURL);
+      return downloadURL;
+    } catch (error) {
+      console.error('❌ Errore nel caricamento sfondo header:', error);
       throw error;
     }
   }

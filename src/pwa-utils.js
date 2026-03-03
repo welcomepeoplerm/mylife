@@ -2,15 +2,29 @@
 
 /**
  * Registra il Service Worker per abilitare le funzionalità PWA
+ * Usa firebase-messaging-sw.js che gestisce sia push che caching
  */
 export async function registerSW() {
   if ('serviceWorker' in navigator) {
     try {
-      const registration = await navigator.serviceWorker.register('/sw.js', {
+      // Usa il SW già registrato da notification-service.js (firebase-messaging-sw.js)
+      // Se non è ancora registrato, registralo qui
+      const existingRegistrations = await navigator.serviceWorker.getRegistrations();
+      const fcmSW = existingRegistrations.find(reg => 
+        reg.active && reg.active.scriptURL.includes('firebase-messaging-sw.js')
+      );
+      
+      if (fcmSW) {
+        console.log('Service Worker PWA già registrato (firebase-messaging-sw.js):', fcmSW.scope);
+        return fcmSW;
+      }
+      
+      // Fallback: registra firebase-messaging-sw.js
+      const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
         scope: '/'
       });
       
-      console.log('Service Worker registrato con successo:', registration.scope);
+      console.log('Service Worker PWA registrato:', registration.scope);
       
       // Gestisce gli aggiornamenti del Service Worker
       registration.addEventListener('updatefound', () => {
@@ -20,8 +34,9 @@ export async function registerSW() {
         newWorker.addEventListener('statechange', () => {
           if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
             console.log('Nuovo contenuto disponibile! Aggiorna la pagina.');
-            // Qui puoi mostrare un messaggio all'utente per ricaricare
-            showUpdateNotification();
+            // NON mostrare notifica automaticamente per evitare reload continui
+            // showUpdateNotification();
+            console.log('Per aggiornare, chiudi tutte le schede e riaprile');
           }
         });
       });
