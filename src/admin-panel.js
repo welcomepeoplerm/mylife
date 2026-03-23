@@ -7,6 +7,7 @@ import { firebaseService } from './firebase-service.js';
 import { uiConfigService } from './ui-config-service.js';
 import { getVersion } from './version.js';
 import { sendNotificationForNewEvent } from './admin-notification-service.js';
+import { getRecentSessions, getStatsKpi, deleteAllStats } from './app-stats-service.js';
 import { db, storage } from './firebase-config.js';
 import { doc, setDoc, deleteDoc, updateDoc, collection, getDocs } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -150,6 +151,7 @@ export async function renderAdminDashboard() {
     { section: 'taste',     icon: '<i class="ph ph-fork-knife"></i>',   label: 'My Taste' },
     { section: 'events',    icon: '<i class="ph ph-calendar-dots"></i>',label: 'My Events' },
     { section: 'divider' },
+    { section: 'stats',     icon: '<i class="ph ph-chart-bar"></i>',    label: 'Statistiche App' },
     { section: 'ui-config', icon: '<i class="ph ph-sliders"></i>',      label: 'Configurazione UI' },
   ];
 
@@ -230,6 +232,244 @@ export async function renderAdminDashboard() {
   return container;
 }
 
+// ─────────────────────────────────────────────────────────
+// STATISTICHE APP
+// ─────────────────────────────────────────────────────────
+async function renderStatsSection() {
+  const wrap = document.createElement('div');
+  wrap.className = 'fl-dashboard';
+
+  // Header sezione
+  const hdr = document.createElement('div');
+  hdr.className = 'fl-stats-header';
+  hdr.innerHTML = `
+    <div>
+      <h2 class="fl-section-title"><i class="ph ph-chart-bar"></i> Statistiche App</h2>
+      <p class="fl-section-subtitle">Solo accessi dall'app &mdash; sessioni backoffice escluse</p>
+    </div>
+    <div style="display:flex;gap:var(--fl-sp-2)">
+      <button class="fl-button fl-button-secondary fl-button-sm" id="stats-refresh-btn">
+        <i class="ph ph-arrow-clockwise"></i> Aggiorna
+      </button>
+      <button class="fl-button fl-button-danger fl-button-sm" id="stats-reset-btn">
+        <i class="ph ph-trash"></i> Reset
+      </button>
+    </div>
+  `;
+  hdr.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:var(--fl-sp-4)';
+  wrap.appendChild(hdr);
+
+  // Refresh handler
+  hdr.querySelector('#stats-refresh-btn').addEventListener('click', async () => {
+    const adminContent = document.querySelector('#admin-content');
+    if (adminContent) {
+      adminContent.innerHTML = '<div class="fl-loader"><div class="fl-spinner"></div> Caricamento...</div>';
+      const fresh = await renderStatsSection();
+      adminContent.innerHTML = '';
+      adminContent.appendChild(fresh);
+    }
+  });
+
+  // Reset handler
+  hdr.querySelector('#stats-reset-btn').addEventListener('click', async () => {
+    if (!confirm('Eliminare TUTTE le statistiche? L\'operazione non è reversibile.')) return;
+    const btn = hdr.querySelector('#stats-reset-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="fl-spinner" style="width:14px;height:14px;border-width:2px"></span> Eliminazione...';
+    try {
+      await deleteAllStats();
+      // Ricarica la sezione
+      const adminContent = document.querySelector('#admin-content');
+      if (adminContent) {
+        adminContent.innerHTML = '<div class="fl-loader"><div class="fl-spinner"></div> Caricamento...</div>';
+        const fresh = await renderStatsSection();
+        adminContent.innerHTML = '';
+        adminContent.appendChild(fresh);
+      }
+    } catch (err) {
+      alert('Errore reset: ' + err.message);
+      btn.disabled = false;
+      btn.innerHTML = '<i class="ph ph-trash"></i> Reset statistiche';
+    }
+  });
+
+  // KPI skeleton
+  const kpiWrap = document.createElement('div');
+  kpiWrap.className = 'fl-kpi-grid fl-stats-kpi';
+  const kpiDefs = [
+    { key: 'total',               icon: 'ph-activity',         label: 'Sessioni totali',       color: '#6da34d' },
+    { key: 'uniqueDevices',       icon: 'ph-devices',          label: 'Dispositivi unici',     color: '#548687' },
+    { key: 'firstVisits',         icon: 'ph-user-plus',        label: 'Prime installazioni',   color: '#5b7ec9' },
+    { key: 'pwaInstalls',         icon: 'ph-app-window',       label: 'Installazioni PWA',     color: '#c97c3a' },
+    { key: 'todaySessions',       icon: 'ph-calendar-check',   label: 'Sessioni oggi',         color: '#9b59b6' },
+    { key: 'notificationClicks',  icon: 'ph-bell-ringing',     label: 'Click su notifiche',   color: '#e74c8b' },
+  ];
+  kpiDefs.forEach(k => {
+    const card = document.createElement('div');
+    card.className = 'fl-kpi-card fl-kpi-card-loading';
+    card.id = `stat-kpi-${k.key}`;
+    card.innerHTML = `
+      <div class="fl-kpi-card-top">
+        <div class="fl-kpi-icon" style="background:${k.color}18"><i class="ph ${k.icon}" style="color:${k.color}"></i></div>
+      </div>
+      <div class="fl-kpi-value" style="color:${k.color}">–</div>
+      <div class="fl-kpi-label">${k.label}</div>
+    `;
+    kpiWrap.appendChild(card);
+  });
+  wrap.appendChild(kpiWrap);
+
+  // Distribuzioni (placeholder)
+  const distRow = document.createElement('div');
+  distRow.className = 'fl-stats-dist-row';
+  distRow.innerHTML = `
+    <div class="fl-activity-card" id="dist-platform">
+      <div class="fl-activity-header"><i class="ph ph-devices"></i> Per piattaforma</div>
+      <div class="fl-activity-body"><div class="fl-loader"><div class="fl-spinner"></div></div></div>
+    </div>
+    <div class="fl-activity-card" id="dist-browser">
+      <div class="fl-activity-header"><i class="ph ph-globe"></i> Per browser</div>
+      <div class="fl-activity-body"><div class="fl-loader"><div class="fl-spinner"></div></div></div>
+    </div>
+    <div class="fl-activity-card" id="dist-device">
+      <div class="fl-activity-header"><i class="ph ph-device-mobile"></i> Per tipo dispositivo</div>
+      <div class="fl-activity-body"><div class="fl-loader"><div class="fl-spinner"></div></div></div>
+    </div>
+    <div class="fl-activity-card" id="dist-pwa-device">
+      <div class="fl-activity-header"><i class="ph ph-app-window"></i> Installazioni PWA per dispositivo</div>
+      <div class="fl-activity-body"><div class="fl-loader"><div class="fl-spinner"></div></div></div>
+    </div>
+    <div class="fl-activity-card" id="dist-notification">
+      <div class="fl-activity-header"><i class="ph ph-bell-ringing"></i> Click per notifica</div>
+      <div class="fl-activity-body"><div class="fl-loader"><div class="fl-spinner"></div></div></div>
+    </div>
+  `;
+  wrap.appendChild(distRow);
+
+  // Tabella sessioni recenti
+  const tableCard = document.createElement('div');
+  tableCard.className = 'fl-section';
+  tableCard.innerHTML = `
+    <div class="fl-section-header">
+      <div>
+        <h3 class="fl-section-title">Sessioni recenti</h3>
+        <p class="fl-section-subtitle">Ultime 200 sessioni registrate</p>
+      </div>
+    </div>
+    <div class="fl-data-grid fl-stats-grid">
+      <div class="fl-grid-head fl-stats-grid-head">
+        <div class="fl-grid-th">Data / Ora</div>
+        <div class="fl-grid-th">Tipo evento</div>
+        <div class="fl-grid-th">Piattaforma / Titolo notifica</div>
+        <div class="fl-grid-th">Browser / Azione</div>
+        <div class="fl-grid-th">Dispositivo</div>
+        <div class="fl-grid-th">Modalità</div>
+        <div class="fl-grid-th">Lingua</div>
+      </div>
+      <div class="fl-grid-body" id="stats-table-body">
+        <div class="fl-loader" style="margin:2rem auto"><div class="fl-spinner"></div> Caricamento...</div>
+      </div>
+    </div>
+  `;
+  wrap.appendChild(tableCard);
+
+  // Carica dati async
+  (async () => {
+    try {
+      const [kpi, sessions] = await Promise.all([getStatsKpi(), getRecentSessions(200)]);
+
+      // Aggiorna KPI cards
+      kpiDefs.forEach(k => {
+        const card = wrap.querySelector(`#stat-kpi-${k.key}`);
+        if (card) {
+          card.classList.remove('fl-kpi-card-loading');
+          card.querySelector('.fl-kpi-value').textContent = kpi[k.key] ?? 0;
+        }
+      });
+
+      // Distribuzione helper
+      const renderDist = (containerId, data) => {
+        const card = wrap.querySelector(`#${containerId} .fl-activity-body`);
+        if (!card) return;
+        const total = Object.values(data).reduce((a, b) => a + b, 0) || 1;
+        card.innerHTML = Object.entries(data)
+          .sort((a, b) => b[1] - a[1])
+          .map(([label, count]) => {
+            const pct = Math.round((count / total) * 100);
+            return `
+              <div class="fl-activity-row">
+                <div class="fl-activity-dot"></div>
+                <span class="fl-activity-text">${label}</span>
+                <span class="fl-stat-bar-wrap">
+                  <span class="fl-stat-bar" style="width:${pct}%"></span>
+                </span>
+                <span class="fl-activity-count">${count} <small>(${pct}%)</small></span>
+              </div>`;
+          }).join('') || '<p style="padding:1rem;color:var(--fl-fg-3)">Nessun dato</p>';
+      };
+
+      renderDist('dist-platform',    kpi.byPlatform);
+      renderDist('dist-browser',      kpi.byBrowser);
+      renderDist('dist-device',       kpi.byDeviceType);
+      renderDist('dist-pwa-device',   kpi.pwaByDeviceType);
+      renderDist('dist-notification', kpi.byNotification);
+
+      // Tabella sessioni
+      const tbody = wrap.querySelector('#stats-table-body');
+      if (sessions.length === 0) {
+        tbody.innerHTML = `<div class="fl-empty-state">
+          <div class="fl-empty-icon"><i class="ph ph-chart-bar"></i></div>
+          <p class="fl-empty-title">Nessuna sessione registrata</p>
+          <p class="fl-empty-desc">I dati verranno raccolti non appena gli utenti apriranno l'app.</p>
+        </div>`;
+      } else {
+        const eventBadge = {
+          'first_visit':         ['fl-badge-blue',   '<i class="ph ph-user-plus"></i> Prima visita'],
+          'session_start':       ['fl-badge-green',  '<i class="ph ph-play"></i> Sessione'],
+          'pwa_install':         ['fl-badge-orange', '<i class="ph ph-app-window"></i> Installa PWA'],
+          'pwa_first_launch':    ['fl-badge-orange', '<i class="ph ph-app-window"></i> Installa PWA'],
+          'notification_click':  ['fl-badge-pink',   '<i class="ph ph-bell-ringing"></i> Click notifica'],
+        };
+        tbody.innerHTML = sessions.map(s => {
+          const ts = s.timestamp?.toDate ? s.timestamp.toDate() : new Date();
+          const dateStr = ts.toLocaleDateString('it-IT', { day:'2-digit', month:'short', year:'numeric' });
+          const timeStr = ts.toLocaleTimeString('it-IT', { hour:'2-digit', minute:'2-digit' });
+          const [badgeCls, badgeLbl] = eventBadge[s.eventType] || ['fl-badge-green', s.eventType];
+
+          // Per i click su notifiche mostriamo il titolo della notifica invece dei campi vuoti
+          const isNotifClick = s.eventType === 'notification_click';
+          const platformCol  = isNotifClick ? '<span style="color:var(--fl-fg-2);font-style:italic">' + (s.notificationTitle || '–') + '</span>' : (s.platform || '–');
+          const browserCol   = isNotifClick ? (s.notificationAction === 'default' ? 'Tap notifica' : s.notificationAction || '–') : (s.browser || '–');
+          const deviceCol    = isNotifClick ? '–' : (s.deviceType || '–');
+          const modeCol      = isNotifClick ? '–' : (s.displayMode || '–');
+          const langCol      = isNotifClick ? '–' : (s.language || '–');
+
+          return `
+            <div class="fl-grid-row fl-stats-grid-row">
+              <div class="fl-grid-td">
+                <span class="fl-date-primary">${dateStr}</span>
+                <span class="fl-date-secondary">${timeStr}</span>
+              </div>
+              <div class="fl-grid-td"><span class="fl-badge ${badgeCls}">${badgeLbl}</span></div>
+              <div class="fl-grid-td">${platformCol}</div>
+              <div class="fl-grid-td">${browserCol}</div>
+              <div class="fl-grid-td">${deviceCol}</div>
+              <div class="fl-grid-td">${modeCol}</div>
+              <div class="fl-grid-td">${langCol}</div>
+            </div>`;
+        }).join('');
+      }
+    } catch (err) {
+      console.error('[Stats] Errore caricamento statistiche:', err);
+      const tbody = wrap.querySelector('#stats-table-body');
+      if (tbody) tbody.innerHTML = `<div class="fl-message-bar fl-message-error" style="margin:1rem">Errore caricamento: ${err.message}</div>`;
+    }
+  })();
+
+  return wrap;
+}
+
+// ─────────────────────────────────────────────────────────
 // Dashboard con KPI
 async function renderDashboard() {
   const dash = document.createElement('div');
@@ -334,6 +574,11 @@ async function renderAdminSection(section) {
   // Dashboard
   if (section === 'dashboard') {
     return await renderDashboard();
+  }
+
+  // Statistiche App
+  if (section === 'stats') {
+    return await renderStatsSection();
   }
 
   // Sezione speciale per configurazione UI
@@ -1157,6 +1402,7 @@ function getSectionTitle(section) {
     journey: 'My Journey',
     taste: 'My Taste',
     events: 'My Events',
+    stats: 'Statistiche App',
     'ui-config': 'Configurazione UI'
   };
   return titles[section] || section;

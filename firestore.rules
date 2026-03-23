@@ -39,6 +39,14 @@ service cloud.firestore {
       allow read, write: if isAdmin();  // Solo admin possono gestire notifiche
     }
     
+    // Regole per App Statistics - sessioni e installazioni (dati non sensibili)
+    match /app_stats/{docId} {
+      allow create: if true;       // L'app può registrare dati anonimi senza autenticazione
+      allow read:   if isAdmin();  // Solo admin possono leggere le statistiche
+      allow delete: if isAdmin();  // Solo admin possono cancellare (reset)
+      allow update: if false;      // I record di audit non si modificano
+    }
+    
     // Negare accesso a tutte le altre collezioni
     match /{document=**} {
       allow read, write: if false;

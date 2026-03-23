@@ -86,6 +86,29 @@ messaging.onBackgroundMessage((payload) => {
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
+// ─── Tracking click notifiche via Firestore REST (no SDK nel SW) ─────────────
+function trackNotificationClick(notification, action) {
+  const projectId = 'mylyfeumbria';
+  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/app_stats`;
+  const now = new Date().toISOString();
+  return fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      fields: {
+        eventType:         { stringValue: 'notification_click' },
+        source:            { stringValue: 'app' },
+        notificationTag:   { stringValue: notification.tag   || '' },
+        notificationTitle: { stringValue: notification.title || '' },
+        notificationBody:  { stringValue: notification.body  || '' },
+        notificationAction:{ stringValue: action             || 'default' },
+        notificationData:  { stringValue: JSON.stringify(notification.data || {}) },
+        timestamp:         { timestampValue: now }
+      }
+    })
+  }).catch(err => console.warn('[AppStats] Errore tracking click notifica:', err));
+}
+
 // Gestione click su notifica
 self.addEventListener('notificationclick', (event) => {
   console.log('Notification clicked:', event.notification.tag);
@@ -112,7 +135,12 @@ self.addEventListener('notificationclick', (event) => {
     return;
   }
   
-  // Per click sulla notifica o pulsante "Visualizza"
+  // Per click sulla notifica o pulsante "Visualizza" — registra il click
+  event.waitUntil(
+    trackNotificationClick(event.notification, event.action)
+  );
+
+  // Apri / focalizza la finestra
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true })
       .then((clientList) => {

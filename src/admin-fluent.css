@@ -1729,12 +1729,108 @@
 }
 
 /* =====================================================
+   STATISTICHE APP
+   ===================================================== */
+
+.fl-stats-header {
+  margin-bottom: var(--fl-sp-2);
+}
+.fl-stats-header .fl-section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--fl-sp-2);
+  font-size: 20px;
+}
+.fl-stats-header .fl-section-title .ph {
+  color: var(--fl-brand);
+  font-size: 22px;
+}
+
+/* Activity body (contenuto card distribuzione) */
+.fl-activity-body {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Distribuzione a 2+2 colonne */
+.fl-stats-dist-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--fl-sp-4);
+}
+
+/* Barra percentuale nelle distribuzioni */
+.fl-stat-bar-wrap {
+  flex: 1;
+  height: 6px;
+  background: var(--fl-bg-3);
+  border-radius: var(--fl-r-pill);
+  overflow: hidden;
+  margin: 0 var(--fl-sp-3);
+}
+.fl-stat-bar {
+  display: block;
+  height: 100%;
+  background: var(--fl-brand);
+  border-radius: var(--fl-r-pill);
+  transition: width 0.4s ease;
+  min-width: 4px;
+}
+
+/* Griglia sessioni */
+.fl-stats-grid .fl-stats-grid-head,
+.fl-stats-grid .fl-stats-grid-row {
+  grid-template-columns: 130px 160px 1fr 1fr 1fr 1fr 80px;
+}
+
+.fl-date-primary {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fl-fg-1);
+}
+.fl-date-secondary {
+  display: block;
+  font-size: 11px;
+  color: var(--fl-fg-3);
+  margin-top: 1px;
+}
+
+/* Badge evento */
+.fl-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: var(--fl-r-pill);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.fl-badge .ph { font-size: 12px; }
+.fl-badge-green  { background: var(--fl-brand-tint1);           color: var(--fl-brand); }
+.fl-badge-blue   { background: rgba(91,126,201,0.12);           color: #3f5fa8; }
+.fl-badge-orange { background: rgba(201,124,58,0.12);           color: #a05a1a; }
+.fl-badge-pink   { background: rgba(231,76,139,0.10);           color: #c0306e; }
+
+/* =====================================================
    RESPONSIVE
    ===================================================== */
 
 @media (max-width: 1100px) {
   .fl-sidebar {
     width: 200px;
+  }
+  .fl-stats-grid .fl-stats-grid-head,
+  .fl-stats-grid .fl-stats-grid-row {
+    grid-template-columns: 120px 140px 1fr 1fr 80px;
+  }
+  /* Nascondi lingua e modalità su schermi medi */
+  .fl-stats-grid .fl-grid-th:nth-child(6),
+  .fl-stats-grid .fl-grid-th:nth-child(7),
+  .fl-stats-grid .fl-stats-grid-row .fl-grid-td:nth-child(6),
+  .fl-stats-grid .fl-stats-grid-row .fl-grid-td:nth-child(7) {
+    display: none;
   }
 }
 
@@ -1753,6 +1849,9 @@
   }
   .fl-kpi-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+  .fl-stats-dist-row {
+    grid-template-columns: 1fr;
   }
 }
 

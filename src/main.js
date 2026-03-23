@@ -8,6 +8,7 @@ import { uiConfigService } from './ui-config-service.js';
 import { notificationService } from './notification-service.js';
 import { checkAndShowNotificationBanner } from './notification-ui.js';
 import './pwa-utils.js'; // Registra beforeinstallprompt per prompt installazione PWA
+import { trackAppSession } from './app-stats-service.js';
 import { 
   renderHomePage, 
   renderMyHomePage, 
@@ -24,6 +25,12 @@ import {
 // Inizializza l'applicazione
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('🚀 My Lyfe Umbria - Applicazione avviata');
+
+  // Registra sessione/installazione per statistiche (fire & forget)
+  // Passa source 'admin' se siamo nel backoffice, 'app' altrimenti
+  const currentHash = window.location.hash.replace('#', '');
+  const statsSource = currentHash.startsWith('/admin') ? 'admin' : 'app';
+  trackAppSession(statsSource).catch(() => {});
   
   // Carica configurazione UI PRIMA della splash screen
   console.log('🎨 Caricamento configurazione UI...');
