@@ -714,6 +714,30 @@ function createAdminItem(item, collection) {
   return row;
 }
 
+// Inizializza tab selector per contenuto multilingua
+function initLangTabs(container) {
+  const allTabs = container.querySelectorAll('.fl-lang-tab[data-group]');
+  const groups = new Set([...allTabs].map(t => t.dataset.group));
+  groups.forEach(group => {
+    const tabs = container.querySelectorAll(`.fl-lang-tab[data-group="${group}"]`);
+    const panels = container.querySelectorAll(`.fl-lang-panel[data-group="${group}"]`);
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const lang = tab.dataset.lang;
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        panels.forEach(p => {
+          if (p.dataset.lang === lang) {
+            p.removeAttribute('hidden');
+          } else {
+            p.setAttribute('hidden', '');
+          }
+        });
+      });
+    });
+  });
+}
+
 // Mostra dialog di modifica (Fluent UI Dialog)
 function showEditModal(item, collection) {
   const isNew = !item;
@@ -800,8 +824,9 @@ function showEditModal(item, collection) {
     closeModal();
   });
   
-  // Inizializza editor HTML e autocomplete dopo che il modal è nel DOM
+  // Inizializza editor HTML, tab lingue e autocomplete dopo che il modal è nel DOM
   setTimeout(async () => {
+    initLangTabs(modal);
     initHTMLEditor(modal);
     await initCategoryAutocomplete(modal, collection);
 
@@ -1019,7 +1044,13 @@ function initHTMLEditor(modal) {
 
 // Crea campi del form (Fluent UI)
 function createFormFields(item, collection) {
-  const languages = ['it', 'en', 'fr', 'de', 'es'];
+  const langMeta = [
+    { code: 'it', label: '🇮🇹 IT' },
+    { code: 'en', label: '🇬🇧 EN' },
+    { code: 'fr', label: '🇫🇷 FR' },
+    { code: 'de', label: '🇩🇪 DE' },
+    { code: 'es', label: '🇪🇸 ES' }
+  ];
 
   const field = (label, inputHtml, hintHtml = '') => `
     <div class="fl-form-group">
@@ -1028,82 +1059,96 @@ function createFormFields(item, collection) {
       ${hintHtml ? `<p class="fl-hint">${hintHtml}</p>` : ''}
     </div>`;
 
-  const multiLangField = (label, name, type = 'input', hint = '', required = 'it', extraAttrs = (l) => '') => {
-    let html = `<div class="fl-form-group">
-      <label class="fl-label">${label}</label>
-      <div class="fl-multilang-group">`;
-    languages.forEach(lang => {
-      const isRequired = lang === required;
-      const value = item?.[name]?.[lang] || '';
-      const badge = `<span class="fl-lang-badge${isRequired ? ' fl-lang-required' : ''}">${lang}</span>`;
-      if (type === 'textarea') {
-        html += `<div class="fl-lang-row">${badge}<textarea
-          class="fl-textarea"
-          name="${name}_${lang}"
+  // Build a tab-controlled multilang section (groupId scopes tabs to avoid cross-activation)
+  const buildLangTabsSection = (groupId, buildPanel) => {
+    const tabs = langMeta.map((l, i) =>
+      `<button type="button" class="fl-lang-tab${i === 0 ? ' active' : ''}" data-lang="${l.code}" data-group="${groupId}">${l.label}</button>`
+    ).join('');
+    const panels = langMeta.map((l, i) =>
+      `<div class="fl-lang-panel" data-lang="${l.code}" data-group="${groupId}"${i > 0 ? ' hidden' : ''}>
+        ${buildPanel(l.code, l.code === 'it')}
+      </div>`
+    ).join('');
+    return `<div class="fl-lang-tabs" data-group="${groupId}">${tabs}</div>${panels}`;
+  };
+
+  // Per-language content panel: titolo, descrizione, + collection-specific multilang fields
+  const contentPanelBuilder = (lang, isRequired) => {
+    let html = `
+      <div class="fl-form-group">
+        <label class="fl-label">Titolo${isRequired ? ' <span class="fl-required-star">*</span>' : ''}</label>
+        <input class="fl-input" type="text" name="titolo_${lang}"
+          placeholder="Titolo in ${lang.toUpperCase()}"
+          value="${(item?.titolo?.[lang] || '').replace(/"/g, '&quot;')}"
+          ${isRequired ? 'required' : ''}>
+      </div>
+      <div class="fl-form-group">
+        <label class="fl-label">Descrizione</label>
+        <textarea class="fl-textarea" name="descrizione_${lang}"
+          placeholder="Descrizione in ${lang.toUpperCase()}"
+          rows="3">${item?.descrizione?.[lang] || ''}</textarea>
+      </div>`;
+
+    if (['journey', 'taste', 'events', 'specials'].includes(collection)) {
+      const catValue = (item?.categoria?.[lang] || '').replace(/"/g, '&quot;');
+      html += `
+      <div class="fl-form-group">
+        <label class="fl-label">Categoria${isRequired ? ' <span class="fl-required-star">*</span>' : ''}</label>
+        <p class="fl-hint" style="margin-bottom:6px">Seleziona da categorie esistenti o digita una nuova</p>
+        <div class="fl-autocomplete-wrap" data-lang="${lang}" data-field="categoria">
+          <input class="fl-input autocomplete-input" type="text"
+            name="categoria_${lang}"
+            placeholder="${lang.toUpperCase()}"
+            value="${catValue}"
+            autocomplete="off"
+            data-collection="${collection}"
+            data-lang="${lang}"
+            ${isRequired ? 'required' : ''}>
+          <div class="fl-autocomplete-dropdown autocomplete-dropdown" style="display:none;"></div>
+        </div>
+      </div>`;
+    }
+
+    if (collection === 'taste') {
+      html += `
+      <div class="fl-form-group">
+        <label class="fl-label">Tipo Cucina</label>
+        <input class="fl-input" type="text" name="tipoCucina_${lang}"
           placeholder="${lang.toUpperCase()}"
-          rows="2"
-          ${isRequired ? 'required' : ''}
-          ${extraAttrs(lang)}
-        >${value}</textarea></div>`;
-      } else {
-        html += `<div class="fl-lang-row">${badge}<input
-          class="fl-input"
-          type="text"
-          name="${name}_${lang}"
+          value="${(item?.tipoCucina?.[lang] || '').replace(/"/g, '&quot;')}">
+      </div>
+      <div class="fl-form-group">
+        <label class="fl-label">Prezzo Medio</label>
+        <input class="fl-input" type="text" name="prezzoMedio_${lang}"
           placeholder="${lang.toUpperCase()}"
-          value="${value}"
-          ${isRequired ? 'required' : ''}
-          ${extraAttrs(lang)}
-        ></div>`;
-      }
-    });
-    html += `</div>${hint ? `<p class="fl-hint">${hint}</p>` : ''}</div>`;
+          value="${(item?.prezzoMedio?.[lang] || '').replace(/"/g, '&quot;')}">
+      </div>`;
+    }
+
     return html;
   };
+
+  // Per-language notes panel (rich text editor)
+  const notesPanelBuilder = (lang) => `
+    <div class="fl-html-editor html-editor-content"
+      contenteditable="true"
+      data-lang="${lang}"
+      data-field="notes"
+    >${item?.notes?.[lang] || ''}</div>
+    <input type="hidden" name="notes_${lang}" class="notes-hidden-${lang}">`;
 
   let fields = `
     <div class="fl-form-section">
       <p class="fl-form-section-title">Identificativo</p>
-      ${field('ID Documento', `<input class="fl-input${item ? ' fl-input' : ''}" type="text" name="id" value="${item?.id || ''}" required ${item ? 'readonly' : ''}>`,
+      ${field('ID Documento', `<input class="fl-input" type="text" name="id" value="${item?.id || ''}" required ${item ? 'readonly' : ''}>`,
         'Identificativo univoco (es: wifi, orvieto, lapalomba)')}
     </div>
 
     <div class="fl-form-section">
       <p class="fl-form-section-title">Contenuto multilingua</p>
-      ${multiLangField('Titolo', 'titolo', 'input', '')}
-      ${multiLangField('Descrizione', 'descrizione', 'textarea', '')}
+      ${buildLangTabsSection('content', contentPanelBuilder)}
     </div>
   `;
-
-  // Categoria con autocomplete
-  if (collection === 'journey' || collection === 'taste' || collection === 'events' || collection === 'specials') {
-    let catHtml = `<div class="fl-form-group">
-      <label class="fl-label">Categoria</label>
-      <p class="fl-hint" style="margin-bottom:6px">Seleziona da categorie esistenti o digita una nuova</p>
-      <div class="fl-multilang-group">`;
-    languages.forEach(lang => {
-      const value = item?.categoria?.[lang] || '';
-      catHtml += `<div class="fl-lang-row">
-        <span class="fl-lang-badge${lang === 'it' ? ' fl-lang-required' : ''}">${lang}</span>
-        <div class="fl-autocomplete-wrap" data-lang="${lang}" data-field="categoria" style="flex:1">
-          <input class="fl-input autocomplete-input" type="text"
-            name="categoria_${lang}"
-            placeholder="${lang.toUpperCase()}"
-            value="${value}"
-            autocomplete="off"
-            data-collection="${collection}"
-            data-lang="${lang}"
-            ${lang === 'it' ? 'required' : ''}
-          >
-          <div class="fl-autocomplete-dropdown autocomplete-dropdown" style="display:none;"></div>
-        </div>
-      </div>`;
-    });
-    catHtml += '</div></div>';
-    fields += `<div class="fl-form-section"><p class="fl-form-section-title">Categoria</p>${catHtml}</div>`;
-  }
-
-  // Campi specifici
 
   if (collection === 'home') {
     fields += `<div class="fl-form-section"><p class="fl-form-section-title">Dettagli</p>
@@ -1145,10 +1190,8 @@ function createFormFields(item, collection) {
         <label class="fl-file-label"><input class="fl-file-input" type="file" name="image" accept="image/*" id="image-upload">📎 Scegli immagine</label>
         <p class="fl-hint">JPG, PNG, max 5MB</p>
       </div>
-      ${multiLangField('Tipo Cucina', 'tipoCucina')}
       ${field('Telefono', `<input class="fl-input" type="tel" name="telefono" value="${item?.telefono || ''}" placeholder="+39 ...">`)}
       ${field('Link Google Maps', `<input class="fl-input" type="url" name="mapsUrl" value="${item?.mapsUrl || ''}" placeholder="https://maps.google.com/?q=...">`)}
-      ${multiLangField('Prezzo Medio', 'prezzoMedio', 'input', '', 'none')}
       <label class="fl-checkbox-wrap">
         <input class="fl-checkbox" type="checkbox" name="featured" ${item?.featured ? 'checked' : ''}>
         <span class="fl-checkbox-label">In evidenza</span>
@@ -1202,34 +1245,25 @@ function createFormFields(item, collection) {
       <label class="fl-checkbox-wrap">
         <input class="fl-checkbox" type="checkbox" name="featured" ${item?.featured ? 'checked' : ''}>
         <span class="fl-checkbox-label">In evidenza</span>
+      </label>
+      <label class="fl-checkbox-wrap" style="margin-top:var(--fl-sp-2)">
+        <input class="fl-checkbox" type="checkbox" name="prenotazioneAttiva" ${item?.prenotazioneAttiva ? 'checked' : ''}>
+        <span class="fl-checkbox-label">Abilita pulsante "Richiesta di prenotazione" nell'app</span>
       </label></div>`;
   }
-
-  // Note HTML multilingua
   fields += `<div class="fl-form-section">
     <p class="fl-form-section-title">Note / Dettagli multilingua</p>
     <div class="fl-form-group">
       <label class="fl-label">Testo formattato</label>
-      <div class="fl-html-toolbar html-editor-toolbar">
-        <button type="button" class="fl-toolbar-btn toolbar-btn" data-command="bold"><strong>B</strong></button>
-        <button type="button" class="fl-toolbar-btn toolbar-btn" data-command="italic"><em>I</em></button>
-        <button type="button" class="fl-toolbar-btn toolbar-btn" data-command="insertUnorderedList">• Lista</button>
-        <button type="button" class="fl-toolbar-btn toolbar-btn" data-command="insertOrderedList">1. Lista</button>
-        <button type="button" class="fl-toolbar-btn toolbar-btn" data-command="createLink">🔗 Link</button>
-      </div>
-      <div class="fl-multilang-group" style="margin-top:0">
-        ${languages.map(lang => `
-          <div class="fl-lang-row" style="align-items:flex-start">
-            <span class="fl-lang-badge" style="margin-top:6px">${lang}</span>
-            <div style="flex:1">
-              <div class="fl-html-editor html-editor-content"
-                contenteditable="true"
-                data-lang="${lang}"
-                data-field="notes"
-              >${item?.notes?.[lang] || ''}</div>
-              <input type="hidden" name="notes_${lang}" class="notes-hidden-${lang}">
-            </div>
-          </div>`).join('')}
+      <div class="fl-notes-editor-wrap">
+        <div class="fl-html-toolbar html-editor-toolbar">
+          <button type="button" class="fl-toolbar-btn toolbar-btn" data-command="bold"><strong>B</strong></button>
+          <button type="button" class="fl-toolbar-btn toolbar-btn" data-command="italic"><em>I</em></button>
+          <button type="button" class="fl-toolbar-btn toolbar-btn" data-command="insertUnorderedList">• Lista</button>
+          <button type="button" class="fl-toolbar-btn toolbar-btn" data-command="insertOrderedList">1. Lista</button>
+          <button type="button" class="fl-toolbar-btn toolbar-btn" data-command="createLink">🔗 Link</button>
+        </div>
+        ${buildLangTabsSection('notes', notesPanelBuilder)}
       </div>
       <p class="fl-hint">Formatta testo e aggiungi link per ogni lingua</p>
     </div>
@@ -1391,6 +1425,9 @@ async function saveItem(formData, existingItem, collection) {
   data.featured = formData.get('featured') === 'on';
   if (collection === 'taste') {
     data.prenotazioneConsigliata = formData.get('prenotazioneConsigliata') === 'on';
+  }
+  if (collection === 'specials') {
+    data.prenotazioneAttiva = formData.get('prenotazioneAttiva') === 'on';
   }
   
   try {

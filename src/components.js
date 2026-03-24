@@ -409,6 +409,9 @@ export function createCard(item, type = 'default') {
             </a>
           ` : ''}
         </div>
+        ${item.prenotazioneAttiva ? `<div class="booking-btn-wrap booking-btn-card">
+          <button class="btn-booking booking-card-btn" data-id="${item.id}">Visualizza l'offerta</button>
+        </div>` : ''}
       </div>
     `;
   }
@@ -420,7 +423,18 @@ export function createCard(item, type = 'default') {
       router.navigate(`/${type}/detail/${item.id}`, { item, type });
     });
   });
-  
+
+  // Booking card button — navigate to detail page
+  if (type === 'specials' && item.prenotazioneAttiva) {
+    const bookingCardBtn = card.querySelector('.booking-card-btn');
+    if (bookingCardBtn) {
+      bookingCardBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        router.navigate(`/specials/detail/${item.id}`, { item, type });
+      });
+    }
+  }
+
   return card;
 }
 
