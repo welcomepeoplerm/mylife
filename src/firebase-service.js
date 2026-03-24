@@ -1,4 +1,4 @@
-// Servizio Firebase per MyLyfe
+﻿// Servizio Firebase per MyLyfe
 
 import { db } from './firebase-config.js';
 import { collection, getDocs, query, orderBy, where, limit as limitDocs } from 'firebase/firestore';
@@ -82,6 +82,80 @@ class FirebaseService {
     return this.getCollection('taste');
   }
   
+  // Ottiene le offerte speciali (ordinate per datainserimento decrescente)
+  async getSpecialsData(orderField = 'datainserimento', orderDirection = 'desc') {
+    try {
+      const q = query(
+        collection(db, 'specials'),
+        orderBy(orderField, orderDirection)
+      );
+      const querySnapshot = await getDocs(q);
+      const items = [];
+      querySnapshot.forEach((doc) => {
+        items.push({ id: doc.id, ...doc.data() });
+      });
+      return items;
+    } catch (error) {
+      console.error('Error getting specials with ordering:', error);
+      try {
+        const querySnapshot = await getDocs(collection(db, 'specials'));
+        const items = [];
+        querySnapshot.forEach((doc) => {
+          items.push({ id: doc.id, ...doc.data() });
+        });
+        items.sort((a, b) => {
+          if (a.datainserimento && b.datainserimento) {
+            return orderDirection === 'desc'
+              ? new Date(b.datainserimento) - new Date(a.datainserimento)
+              : new Date(a.datainserimento) - new Date(b.datainserimento);
+          }
+          return (a.ordine || 0) - (b.ordine || 0);
+        });
+        return items;
+      } catch (fallbackError) {
+        console.error('Error getting specials (fallback):', fallbackError);
+        return [];
+      }
+    }
+  }
+
+  // Ottiene le offerte speciali (ordinate per datainserimento decrescente)
+  async getSpecialsData(orderField = 'datainserimento', orderDirection = 'desc') {
+    try {
+      const q = query(
+        collection(db, 'specials'),
+        orderBy(orderField, orderDirection)
+      );
+      const querySnapshot = await getDocs(q);
+      const items = [];
+      querySnapshot.forEach((doc) => {
+        items.push({ id: doc.id, ...doc.data() });
+      });
+      return items;
+    } catch (error) {
+      console.error('Error getting specials with ordering:', error);
+      try {
+        const querySnapshot = await getDocs(collection(db, 'specials'));
+        const items = [];
+        querySnapshot.forEach((doc) => {
+          items.push({ id: doc.id, ...doc.data() });
+        });
+        items.sort((a, b) => {
+          if (a.datainserimento && b.datainserimento) {
+            return orderDirection === 'desc'
+              ? new Date(b.datainserimento) - new Date(a.datainserimento)
+              : new Date(a.datainserimento) - new Date(b.datainserimento);
+          }
+          return (a.ordine || 0) - (b.ordine || 0);
+        });
+        return items;
+      } catch (fallbackError) {
+        console.error('Error getting specials (fallback):', fallbackError);
+        return [];
+      }
+    }
+  }
+
   // Ottiene gli eventi di My Events (ordinati per datainserimento decrescente)
   async getEventsData(orderField = 'datainserimento', orderDirection = 'desc') {
     try {

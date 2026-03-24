@@ -16,7 +16,8 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 let categoriesCache = {
   journey: {},
   taste: {},
-  events: {}
+  events: {},
+  specials: {}
 };
 
 // Ottieni tutte le categorie esistenti per una collezione
@@ -150,6 +151,7 @@ export async function renderAdminDashboard() {
     { section: 'journey',   icon: '<i class="ph ph-map-trifold"></i>',  label: 'My Journey' },
     { section: 'taste',     icon: '<i class="ph ph-fork-knife"></i>',   label: 'My Taste' },
     { section: 'events',    icon: '<i class="ph ph-calendar-dots"></i>',label: 'My Events' },
+    { section: 'specials',  icon: '<i class="ph ph-star"></i>',          label: 'My Specials' },
     { section: 'divider' },
     { section: 'stats',     icon: '<i class="ph ph-chart-bar"></i>',    label: 'Statistiche App' },
     { section: 'ui-config', icon: '<i class="ph ph-sliders"></i>',      label: 'Configurazione UI' },
@@ -297,7 +299,7 @@ async function renderStatsSection() {
   const kpiWrap = document.createElement('div');
   kpiWrap.className = 'fl-kpi-grid fl-stats-kpi';
   const kpiDefs = [
-    { key: 'total',               icon: 'ph-activity',         label: 'Sessioni totali',       color: '#6da34d' },
+    { key: 'total',               icon: 'ph-activity',         label: 'Sessioni totali',       color: '#87a34d' },
     { key: 'uniqueDevices',       icon: 'ph-devices',          label: 'Dispositivi unici',     color: '#548687' },
     { key: 'firstVisits',         icon: 'ph-user-plus',        label: 'Prime installazioni',   color: '#5b7ec9' },
     { key: 'pwaInstalls',         icon: 'ph-app-window',       label: 'Installazioni PWA',     color: '#c97c3a' },
@@ -476,10 +478,11 @@ async function renderDashboard() {
   dash.className = 'fl-dashboard';
 
   const kpiSections = [
-    { section: 'home',    icon: '<i class="ph ph-house"></i>',         label: 'My Home',    color: '#6da34d', sub: 'Contenuti homepage', key: 'home' },
+    { section: 'home',    icon: '<i class="ph ph-house"></i>',         label: 'My Home',    color: '#87a34d', sub: 'Contenuti homepage', key: 'home' },
     { section: 'journey', icon: '<i class="ph ph-map-trifold"></i>',  label: 'Itinerari',  color: '#548687', sub: 'My Journey',         key: 'journey' },
     { section: 'taste',   icon: '<i class="ph ph-fork-knife"></i>',   label: 'Ristoranti', color: '#c97c3a', sub: 'My Taste',           key: 'taste' },
     { section: 'events',  icon: '<i class="ph ph-calendar-dots"></i>',label: 'Eventi',     color: '#5b7ec9', sub: 'My Events',          key: 'events' },
+    { section: 'specials',icon: '<i class="ph ph-star"></i>',          label: 'Specials',   color: '#c97c3a', sub: 'My Specials',        key: 'specials' },
   ];
 
   // KPI Grid (skeleton loading)
@@ -598,9 +601,13 @@ async function renderAdminSection(section) {
     } else if (section === 'taste') {
       data = await firebaseService.getTasteData();
     } else if (section === 'events') {
-      console.log('📅 Caricamento eventi per admin panel...');
+      console.log('\uD83D\uDCC5 Caricamento eventi per admin panel...');
       data = await firebaseService.getEventsData();
-      console.log(`📊 Caricati ${data.length} eventi:`, data);
+      console.log(`\uD83D\uDCCA Caricati ${data.length} eventi:`, data);
+    } else if (section === 'specials') {
+      console.log('\u2B50 Caricamento offerte speciali per admin panel...');
+      data = await firebaseService.getSpecialsData();
+      console.log(`\uD83D\uDCCA Caricate ${data.length} offerte:`, data);
     }
   } catch (error) {
     console.error('❌ Errore caricamento dati:', error);
@@ -785,8 +792,8 @@ function showEditModal(item, collection) {
     const formData = new FormData(form);
     await saveItem(formData, item, collection);
     
-    // Invalida cache categorie se journey o taste o events
-    if (collection === 'journey' || collection === 'taste' || collection === 'events') {
+    // Invalida cache categorie se journey o taste o events o specials
+    if (collection === 'journey' || collection === 'taste' || collection === 'events' || collection === 'specials') {
       invalidateCategoriesCache(collection);
     }
     
@@ -797,6 +804,26 @@ function showEditModal(item, collection) {
   setTimeout(async () => {
     initHTMLEditor(modal);
     await initCategoryAutocomplete(modal, collection);
+
+    // Calcolo automatico prezzoScontato per Specials
+    if (collection === 'specials') {
+      const prezzoInput = modal.querySelector('#specials-prezzo');
+      const scontoPercInput = modal.querySelector('#specials-sconto-perc');
+      const prezzoScontatoInput = modal.querySelector('#specials-prezzo-scontato');
+
+      const calcola = () => {
+        const p = parseFloat(prezzoInput?.value);
+        const s = parseFloat(scontoPercInput?.value);
+        if (!isNaN(p) && p > 0 && !isNaN(s) && s > 0 && s <= 100) {
+          prezzoScontatoInput.value = (p - (p * s / 100)).toFixed(2);
+        } else if (!isNaN(p) && p > 0) {
+          prezzoScontatoInput.value = '';
+        }
+      };
+
+      prezzoInput?.addEventListener('input', calcola);
+      scontoPercInput?.addEventListener('input', calcola);
+    }
   }, 0);
 }
 
@@ -1049,7 +1076,7 @@ function createFormFields(item, collection) {
   `;
 
   // Categoria con autocomplete
-  if (collection === 'journey' || collection === 'taste' || collection === 'events') {
+  if (collection === 'journey' || collection === 'taste' || collection === 'events' || collection === 'specials') {
     let catHtml = `<div class="fl-form-group">
       <label class="fl-label">Categoria</label>
       <p class="fl-hint" style="margin-bottom:6px">Seleziona da categorie esistenti o digita una nuova</p>
@@ -1151,6 +1178,33 @@ function createFormFields(item, collection) {
       </label></div>`;
   }
 
+  if (collection === 'specials') {
+    fields += `<div class="fl-form-section"><p class="fl-form-section-title">Dettagli offerta</p>
+      <div class="fl-form-group">
+        <label class="fl-label">Immagine</label>
+        ${item?.imgUrl ? `<div class="fl-image-preview" style="margin-bottom:8px"><img class="fl-preview-thumb" src="${item.imgUrl}" alt="Immagine"></div>` : ''}
+        <label class="fl-file-label"><input class="fl-file-input" type="file" name="image" accept="image/*" id="image-upload">📎 Scegli immagine</label>
+        <p class="fl-hint">JPG, PNG, max 5MB</p>
+      </div>
+      <div class="fl-form-row">
+        ${field('Prezzo (€)', `<input class="fl-input" type="number" name="prezzo" id="specials-prezzo" value="${item?.prezzo || ''}" placeholder="es. 100" min="0" step="0.01">`)}
+        ${field('Sconto %', `<input class="fl-input" type="number" name="scontoPerc" id="specials-sconto-perc" value="${item?.scontoPerc || ''}" placeholder="es. 20" min="0" max="100" step="1">`)}
+      </div>
+      <div class="fl-form-group">
+        <label class="fl-label">Prezzo Scontato (€) <span style="color:#888;font-weight:400;font-size:0.85rem">— calcolato automaticamente</span></label>
+        <input class="fl-input" type="number" name="prezzoScontato" id="specials-prezzo-scontato" value="${item?.prezzoScontato || ''}" placeholder="Calcolato automaticamente" min="0" step="0.01" readonly style="background:#f5f5f5;color:#87a34d;font-weight:700">
+      </div>
+      ${field('Etichetta sconto (opzionale)', `<input class="fl-input" type="text" name="sconto" value="${item?.sconto || ''}" placeholder="es. 2x1, Gratis shipping — sovrascrive il calcolo automatico">`)}
+      ${field('Valido Fino Al', `<input class="fl-input" type="date" name="validoFino" value="${item?.validoFino || ''}">`)}
+      ${field('Luogo', `<input class="fl-input" type="text" name="luogo" value="${item?.luogo || ''}" placeholder="Dove è disponibile l'offerta">`)}
+      ${field('Link Google Maps', `<input class="fl-input" type="url" name="mapsUrl" value="${item?.mapsUrl || ''}" placeholder="https://maps.google.com/?q=...">`)}
+      ${field('Sito Web', `<input class="fl-input" type="url" name="sitoWeb" value="${item?.sitoWeb || ''}" placeholder="https://...">`)}
+      <label class="fl-checkbox-wrap">
+        <input class="fl-checkbox" type="checkbox" name="featured" ${item?.featured ? 'checked' : ''}>
+        <span class="fl-checkbox-label">In evidenza</span>
+      </label></div>`;
+  }
+
   // Note HTML multilingua
   fields += `<div class="fl-form-section">
     <p class="fl-form-section-title">Note / Dettagli multilingua</p>
@@ -1186,7 +1240,7 @@ function createFormFields(item, collection) {
     <p class="fl-form-section-title">Risorse</p>
     <div class="fl-form-group">
       <label class="fl-label">Guida PDF</label>
-      ${item?.pdfUrl ? `<p style="margin-bottom:8px;font-size:13px">📄 <a href="${item.pdfUrl}" target="_blank" style="color:var(--fl-brand)">Guida corrente</a></p>` : ''}
+      ${item?.pdfUrl ? `<p style="margin-bottom:8px;font-size:13px">&#x1F4C4; <a href="${item.pdfUrl}" target="_blank" style="color:var(--fl-brand)">Guida corrente</a></p>` : ''}
       <label class="fl-file-label"><input class="fl-file-input" type="file" name="pdf" accept=".pdf,application/pdf" id="pdf-upload">📎 Scegli PDF</label>
       <p class="fl-hint">Max 10MB — opzionale</p>
     </div>
@@ -1228,7 +1282,7 @@ async function saveItem(formData, existingItem, collection) {
       // Ottieni URL download
       const downloadURL = await getDownloadURL(storageRef);
       data.imgUrl = downloadURL;
-      console.log('✅ Immagine caricata:', downloadURL);
+      console.log('Immagine caricata:', downloadURL);
     } catch (error) {
       console.error('❌ Errore upload immagine:', error);
       alert('Errore caricamento immagine: ' + error.message);
@@ -1266,7 +1320,7 @@ async function saveItem(formData, existingItem, collection) {
       // Ottieni URL download
       const downloadURL = await getDownloadURL(storageRef);
       data.pdfUrl = downloadURL;
-      console.log('✅ PDF caricato:', downloadURL);
+      console.log('PDF caricato:', downloadURL);
     } catch (error) {
       console.error('❌ Errore upload PDF:', error);
       alert('Errore caricamento PDF: ' + error.message);
@@ -1309,17 +1363,26 @@ async function saveItem(formData, existingItem, collection) {
   });
   
   // Altri campi
-  ['icona', 'distanza', 'durata', 'mapsUrl', 'telefono', 'dataEvento', 'oraEvento', 'luogoEvento', 'sitoWeb'].forEach(field => {
+  ['icona', 'distanza', 'durata', 'mapsUrl', 'telefono', 'dataEvento', 'oraEvento', 'luogoEvento', 'sitoWeb', 'sconto', 'validoFino', 'luogo'].forEach(field => {
     const value = formData.get(field);
     if (value) data[field] = value;
   });
+
+  // Campi numerici per Specials
+  if (collection === 'specials') {
+    const prezzo = formData.get('prezzo');
+    const scontoPerc = formData.get('scontoPerc');
+    const prezzoScontato = formData.get('prezzoScontato');
+    if (prezzo) data.prezzo = parseFloat(prezzo);
+    if (scontoPerc) data.scontoPerc = parseFloat(scontoPerc);
+    if (prezzoScontato) data.prezzoScontato = parseFloat(prezzoScontato);
+  }
   
-  // Aggiungi datainserimento per eventi (se nuovo o non esiste già)
-  if (collection === 'events') {
+  // Aggiungi datainserimento per eventi o specials (se nuovo o non esiste già)
+  if (collection === 'events' || collection === 'specials') {
     if (!existingItem || !existingItem.datainserimento) {
       data.datainserimento = new Date().toISOString();
     } else {
-      // Mantieni la data di inserimento originale
       data.datainserimento = existingItem.datainserimento;
     }
   }
@@ -1335,27 +1398,27 @@ async function saveItem(formData, existingItem, collection) {
     const isNewItem = !existingItem;
     
     await setDoc(doc(db, collection, id), data);
-    console.log('✅ Item salvato:', id);
+    console.log('Item salvato:', id);
     
-    // Invia notifica push se è un nuovo evento
-    if (collection === 'events' && isNewItem) {
-      console.log('📱 Tentativo invio notifica push per nuovo evento...');
+    // Invia notifica push se è un nuovo evento o una nuova offerta speciale
+    if ((collection === 'events' || collection === 'specials') && isNewItem) {
+      console.log('Tentativo invio notifica push per nuovo elemento...');
       try {
         const notificationResult = await sendNotificationForNewEvent({
           id: id,
+          _collectionType: collection,
           ...data
         });
-        
         if (notificationResult.success) {
-          console.log('✅ Notifica programmata:', notificationResult.message);
-          alert(`Salvato con successo!\n\n📱 ${notificationResult.message}`);
+          console.log('Notifica programmata:', notificationResult.message);
+          alert(`Salvato con successo!\n\n${notificationResult.message}`);
         } else {
-          console.warn('⚠️ Notifica non inviata:', notificationResult.error);
-          alert(`Salvato con successo!\n\n⚠️ Notifica non inviata: ${notificationResult.error || 'Configura FCM per abilitare le notifiche'}`);
+          console.warn('\u26A0\uFE0F Notifica non inviata:', notificationResult.error);
+          alert(`Salvato con successo!\n\n\u26A0\uFE0F Notifica non inviata: ${notificationResult.error || 'Configura FCM per abilitare le notifiche'}`);
         }
       } catch (notifError) {
-        console.error('❌ Errore sistema notifiche:', notifError);
-        alert(`Salvato con successo!\n\n⚠️ Sistema notifiche non disponibile (${notifError.message})`);
+        console.error('\u274C Errore sistema notifiche:', notifError);
+        alert(`Salvato con successo!\n\n\u26A0\uFE0F Sistema notifiche non disponibile (${notifError.message})`);
       }
     } else {
       alert('Salvato con successo!');
@@ -1379,7 +1442,7 @@ async function saveItem(formData, existingItem, collection) {
 async function deleteItem(id, collection) {
   try {
     await deleteDoc(doc(db, collection, id));
-    console.log('✅ Item eliminato:', id);
+    console.log('Item eliminato:', id);
     alert('Eliminato con successo!');
     // Ricarica solo il dashboard admin senza reload completo
     const adminContent = document.querySelector('#admin-content');
@@ -1402,6 +1465,7 @@ function getSectionTitle(section) {
     journey: 'My Journey',
     taste: 'My Taste',
     events: 'My Events',
+    specials: 'My Specials',
     stats: 'Statistiche App',
     'ui-config': 'Configurazione UI'
   };
@@ -1509,7 +1573,7 @@ async function renderUIConfigSection() {
 
       <!-- TESTI HOMEPAGE -->
       <div class="fl-config-section">
-        <h4>🏠 Testi Homepage</h4>
+        <h4>&#x1F3E0; Testi Homepage</h4>
         <p class="fl-config-section-desc">Testi visibili nella homepage</p>
         <div class="fl-form-group" style="margin-top:12px">
           <label class="fl-label">Sottotitolo Benvenuto</label>
@@ -1519,7 +1583,7 @@ async function renderUIConfigSection() {
 
       <!-- FOOTER -->
       <div class="fl-config-section">
-        <h4>📄 Footer</h4>
+        <h4>&#x1F4C4; Footer</h4>
         <p class="fl-config-section-desc">Testi del piè di pagina</p>
         <div class="fl-form-row" style="margin-top:12px">
           <div class="fl-form-group">
@@ -1535,7 +1599,7 @@ async function renderUIConfigSection() {
 
       <!-- CONTATTI -->
       <div class="fl-config-section">
-        <h4>📞 Contatti</h4>
+        <h4>&#x1F4DE; Contatti</h4>
         <p class="fl-config-section-desc">Numero di telefono ed email per MyContacts</p>
         <div class="fl-form-row" style="margin-top:12px">
           <div class="fl-form-group">
@@ -1591,7 +1655,7 @@ async function renderUIConfigSection() {
           currentConfig.branding.logoType = 'image';
           await uiConfigService.saveConfig(currentConfig);
           
-          alert('✅ Logo caricato! Ricaricare la sezione per vedere le modifiche.');
+          alert('Logo caricato! Ricaricare la sezione per vedere le modifiche.');
           renderSection('ui-config');
         } catch (error) {
           alert('❌ Errore nel caricamento del logo: ' + error.message);
@@ -1612,7 +1676,7 @@ async function renderUIConfigSection() {
         currentConfig.branding.logoUrl = null;
         currentConfig.branding.logoType = 'svg';
         await uiConfigService.saveConfig(currentConfig);
-        alert('✅ Logo rimosso!');
+        alert('Logo rimosso!');
         renderSection('ui-config');
       }
     });
@@ -1640,7 +1704,7 @@ async function renderUIConfigSection() {
           currentConfig.branding.headerBackgroundUrl = downloadURL;
           await uiConfigService.saveConfig(currentConfig);
           
-          alert('✅ Sfondo header caricato! Ricaricare la sezione per vedere le modifiche.');
+          alert('Sfondo header caricato! Ricaricare la sezione per vedere le modifiche.');
           renderSection('ui-config');
         } catch (error) {
           alert('❌ Errore nel caricamento dello sfondo: ' + error.message);
@@ -1660,7 +1724,7 @@ async function renderUIConfigSection() {
         const currentConfig = uiConfigService.getConfig();
         currentConfig.branding.headerBackgroundUrl = null;
         await uiConfigService.saveConfig(currentConfig);
-        alert('✅ Sfondo rimosso!');
+        alert('Sfondo rimosso!');
         renderSection('ui-config');
       }
     });
@@ -1704,7 +1768,7 @@ async function saveUIConfig(form) {
       lightGreen: formData.get('color-light-green-text'),
       background: formData.get('color-background-text'),
       cardBg: '#ffffff',
-      text: '#2c3e50',
+      text: '#4D5351',
       textLight: '#7f8c8d',
       border: '#e8e8e8'
     },
@@ -1747,21 +1811,7 @@ async function saveUIConfig(form) {
     },
     footer: {
       copyright: formData.get('footer-copyright'),
-      year: formData.get('footer-year'),
-      madeWith: {
-        it: '',
-        en: 'Made with',
-        fr: 'Réalisé avec',
-        de: 'Erstellt mit',
-        es: 'Hecho con'
-      },
-      for: {
-        it: '',
-        en: 'for',
-        fr: 'pour',
-        de: 'für',
-        es: 'para'
-      }
+      year: formData.get('footer-year')
     },
     contacts: {
       phone: formData.get('contacts-phone'),
@@ -1776,7 +1826,7 @@ async function saveUIConfig(form) {
     uiConfigService.applyColors(config.colors);
     
     // Ricarica la pagina per applicare tutte le modifiche
-    alert('✅ Configurazione salvata! La pagina verrà ricaricata per applicare le modifiche.');
+    alert('Configurazione salvata! La pagina verrà ricaricata per applicare le modifiche.');
     setTimeout(() => {
       window.location.reload();
     }, 1000);
@@ -1798,7 +1848,7 @@ function previewUIConfig(form) {
     lightGreen: formData.get('color-light-green-text'),
     background: formData.get('color-background-text'),
     cardBg: '#ffffff',
-    text: '#2c3e50',
+    text: '#4D5351',
     textLight: '#7f8c8d',
     border: '#e8e8e8'
   };
@@ -1815,7 +1865,7 @@ async function resetUIConfig() {
     const defaultConfig = uiConfigService.defaultConfig;
     await uiConfigService.saveConfig(defaultConfig);
     
-    alert('✅ Configurazione ripristinata! La pagina verrà ricaricata.');
+    alert('Configurazione ripristinata! La pagina verrà ricaricata.');
     setTimeout(() => {
       window.location.reload();
     }, 1000);

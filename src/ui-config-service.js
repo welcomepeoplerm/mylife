@@ -11,14 +11,14 @@ class UIConfigService {
     this.defaultConfig = {
       // Palette colori
       colors: {
-        primary: '#6da34d',      // Verde
-        secondary: '#3d6b2a',    // Verde scuro
-        accent: '#8d9c71',       // Verde oliva/salvia
+        primary: '#87a34d',      // Verde
+        secondary: '#1B6B3A',    // Verde scuro
+        accent: '#88C39C',       // Verde oliva/salvia
         teal: '#548687',         // Teal
-        lightGreen: '#c5e99b',   // Verde chiaro
+        lightGreen: '#B8DECA',   // Verde chiaro
         background: '#F5F5F5',   // Grigio chiaro
         cardBg: '#ffffff',
-        text: '#2c3e50',
+        text: '#4D5351',
         textLight: '#7f8c8d',
         border: '#e8e8e8'
       },
@@ -66,21 +66,7 @@ class UIConfigService {
       // Footer
       footer: {
         copyright: 'My Lyfe Umbria',
-        year: '2026',
-        madeWith: {
-          it: '',
-          en: 'Made with',
-          fr: 'Réalisé avec',
-          de: 'Erstellt mit',
-          es: 'Hecho con'
-        },
-        for: {
-          it: '',
-          en: 'for',
-          fr: 'pour',
-          de: 'für',
-          es: 'para'
-        }
+        year: '2026'
       },
       
       // Contacts

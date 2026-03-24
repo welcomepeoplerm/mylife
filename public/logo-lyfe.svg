@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 300" fill="none">
+  <!-- Tree canopy - main circular mass -->
+  <g fill="#7d8f6a" opacity="0.92">
+    <!-- Central trunk -->
+    <rect x="126" y="168" width="8" height="42" rx="4"/>
+    <!-- Main branches -->
+    <path d="M130 172 Q115 158 98 148 Q110 152 122 160 Q118 142 108 128 Q120 138 128 155 Q124 135 118 118 Q128 132 132 152 Q136 132 142 118 Q136 135 132 152 Q138 138 150 128 Q140 142 132 155 Q144 152 156 148 Q140 158 130 172Z" fill="#7d8f6a"/>
+    <!-- Tree canopy blobs -->
+    <ellipse cx="130" cy="105" rx="44" ry="40"/>
+    <ellipse cx="100" cy="118" rx="32" ry="28"/>
+    <ellipse cx="160" cy="118" rx="32" ry="28"/>
+    <ellipse cx="88" cy="100" rx="26" ry="24"/>
+    <ellipse cx="172" cy="100" rx="26" ry="24"/>
+    <ellipse cx="115" cy="82" rx="28" ry="25"/>
+    <ellipse cx="145" cy="82" rx="28" ry="25"/>
+    <ellipse cx="130" cy="72" rx="32" ry="26"/>
+    <ellipse cx="108" cy="72" rx="22" ry="20"/>
+    <ellipse cx="152" cy="72" rx="22" ry="20"/>
+    <ellipse cx="95" cy="88" rx="20" ry="18"/>
+    <ellipse cx="165" cy="88" rx="20" ry="18"/>
+    <!-- Small branch tips -->
+    <ellipse cx="78" cy="110" rx="18" ry="16"/>
+    <ellipse cx="182" cy="110" rx="18" ry="16"/>
+    <ellipse cx="82" cy="128" rx="16" ry="14"/>
+    <ellipse cx="178" cy="128" rx="16" ry="14"/>
+    <ellipse cx="98" cy="62" rx="16" ry="14"/>
+    <ellipse cx="162" cy="62" rx="16" ry="14"/>
+    <ellipse cx="130" cy="55" rx="22" ry="18"/>
+  </g>
+
+  <!-- LYFE text -->
+  <text x="130" y="240" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="52" font-weight="700" fill="#4a5c3a" letter-spacing="6">LYFE</text>
+
+  <!-- Divider lines -->
+  <line x1="36" y1="252" x2="224" y2="252" stroke="#7d8f6a" stroke-width="0.8"/>
+
+  <!-- UMBRIA COUNTRY HOUSE text -->
+  <text x="130" y="270" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="11" fill="#6b7c58" letter-spacing="3.5" font-weight="400">UMBRIA COUNTRY HOUSE</text>
+
+  <!-- Bottom line -->
+  <line x1="36" y1="278" x2="224" y2="278" stroke="#7d8f6a" stroke-width="0.8"/>
+</svg>

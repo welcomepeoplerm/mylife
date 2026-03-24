@@ -15,11 +15,13 @@ import {
   renderMyJourneyPage, 
   renderMyTastePage, 
   renderMyEventsPage,
+  renderMySpecialsPage,
   renderMyAssistantPage,
   renderHomeDetailPage,
   renderJourneyDetailPage,
   renderTasteDetailPage,
-  renderEventsDetailPage
+  renderEventsDetailPage,
+  renderSpecialsDetailPage
 } from './pages.js';
 
 // Inizializza l'applicazione
@@ -57,11 +59,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Footer con configurazione dinamica
   const footer = document.createElement('footer');
   footer.className = 'app-footer';
-  const currentLang = i18n.getCurrentLanguage();
-  const madeWith = uiConfig.footer.madeWith[currentLang] || '';
-  const forText = uiConfig.footer.for[currentLang] || '';
   footer.innerHTML = `
-    <p>${madeWith} ${madeWith ? '❤️' : ''} ${forText} ${forText ? '🌄' : ''}</p>
     <p>&copy; ${uiConfig.footer.year} ${uiConfig.footer.copyright}</p>
   `;
   app.appendChild(footer);
@@ -104,6 +102,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     mainContent.appendChild(page);
   });
   
+  router.register('/specials', async () => {
+    const page = await renderMySpecialsPage();
+    mainContent.innerHTML = '';
+    mainContent.appendChild(page);
+  });
+  
   router.register('/assistant', async () => {
     const page = await renderMyAssistantPage();
     mainContent.innerHTML = '';
@@ -131,6 +135,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   router.register('/events/detail/:id', async (params) => {
     const page = await renderEventsDetailPage(params);
+    mainContent.innerHTML = '';
+    mainContent.appendChild(page);
+  });
+
+  router.register('/specials/detail/:id', async (params) => {
+    const page = await renderSpecialsDetailPage(params);
     mainContent.innerHTML = '';
     mainContent.appendChild(page);
   });

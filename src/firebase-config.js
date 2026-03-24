@@ -1,4 +1,4 @@
-// Configurazione Firebase per MyLyfe Umbria
+﻿// Configurazione Firebase per MyLyfe Umbria
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';

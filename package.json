@@ -6,9 +6,10 @@
   "main": "index.js",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && echo. && echo  Build completata! Avvia il preview con: npm run preview && echo  Apri nel browser: http://localhost:4173 && echo.",
     "preview": "vite preview",
     "serve": "vite preview",
+    "build:open": "vite build && start http://localhost:4173 && vite preview",
     "deploy": "npm run build && firebase deploy --only hosting",
     "populate-db": "node scripts/populate-db.js"
   },

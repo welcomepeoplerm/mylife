@@ -6,17 +6,20 @@ const translations = {
     // Menu principale
     appName: "MyLyfe",
     appTagline: "La tua guida personale in Umbria",
-    myHome: "My Home",
-    myJourney: "My Journey",
-    myTaste: "My Taste",
-    myEvents: "My Events",
-    myAssistant: "My Assistant",
+    welcome: "Benvenuto!",
+    myHome: "Home",
+    myJourney: "Journey",
+    myTaste: "Taste",
+    myEvents: "Events",
+    mySpecials: "Specials",
+    myAssistant: "Assistant",
     
     // Descrizioni menu
     myHomeDesc: "Istruzioni del casale",
     myJourneyDesc: "La tua guida turistica",
     myTasteDesc: "Ristoranti e degustazioni",
     myEventsDesc: "Eventi e manifestazioni",
+    mySpecialsDesc: "Offerte e promozioni speciali",
     myAssistantDesc: "Il tuo assistente personale",
     myContactsDesc: "Contatti rapidi",
     
@@ -55,18 +58,19 @@ const translations = {
     eventTime: "Orario",
     eventLocation: "Luogo",
     allEvents: "Tutti gli eventi",
+
+    // My Specials
+    specialValidUntil: "Valida fino al",
+    specialDiscount: "Sconto",
+    allSpecials: "Tutte le offerte",
     
     // My Assistant
     sendMessage: "Invia messaggio",
     yourMessage: "Il tuo messaggio...",
     chatWithUs: "Chatta con noi",
-    assistantIntro: "Contatta Oliver, il tuo assistente personale per l'Umbria!",
+    assistantIntro: "Contattaci",
     assistantWelcome: "Saremo felici di rispondere alle tue domande.",
     availableHours: "Disponibili",
-    
-    // Footer
-    madeWith: "",
-    for: "",
     
     // Errori
     errorLoading: "Errore nel caricamento dei dati",
@@ -77,17 +81,20 @@ const translations = {
     // Main menu
     appName: "MyLyfe",
     appTagline: "Your personal guide in Umbria",
-    myHome: "My Home",
-    myJourney: "My Journey",
-    myTaste: "My Taste",
-    myEvents: "My Events",
-    myAssistant: "My Assistant",
+    welcome: "Welcome!",
+    myHome: "Home",
+    myJourney: "Journey",
+    myTaste: "Taste",
+    myEvents: "Events",
+    mySpecials: "Specials",
+    myAssistant: "Assistant",
     
     // Menu descriptions
     myHomeDesc: "Farmhouse instructions",
     myJourneyDesc: "Your tourist guide",
     myTasteDesc: "Restaurants and tastings",
     myEventsDesc: "Events and festivals",
+    mySpecialsDesc: "Special offers and promotions",
     myAssistantDesc: "Your personal assistant",
     myContactsDesc: "Quick contacts",
     
@@ -126,18 +133,19 @@ const translations = {
     eventTime: "Time",
     eventLocation: "Location",
     allEvents: "All events",
+
+    // My Specials
+    specialValidUntil: "Valid until",
+    specialDiscount: "Discount",
+    allSpecials: "All offers",
     
     // My Assistant
     sendMessage: "Send message",
     yourMessage: "Your message...",
     chatWithUs: "Chat with us",
-    assistantIntro: "Contact Oliver, your personal assistant for Umbria!",
+    assistantIntro: "Contact us",
     assistantWelcome: "We will be happy to answer your questions.",
     availableHours: "Available",
-    
-    // Footer
-    madeWith: "Made with",
-    for: "for",
     
     // Errors
     errorLoading: "Error loading data",
@@ -148,17 +156,20 @@ const translations = {
     // Menu principal
     appName: "MyLyfe",
     appTagline: "Votre guide personnel en Ombrie",
-    myHome: "My Home",
-    myJourney: "My Journey",
-    myTaste: "My Taste",
-    myEvents: "My Events",
-    myAssistant: "My Assistant",
+    welcome: "Bienvenue !",
+    myHome: "Home",
+    myJourney: "Journey",
+    myTaste: "Taste",
+    myEvents: "Events",
+    mySpecials: "Specials",
+    myAssistant: "Assistant",
     
     // Descriptions menu
     myHomeDesc: "Instructions du gîte",
     myJourneyDesc: "Votre guide touristique",
     myTasteDesc: "Restaurants et dégustations",
     myEventsDesc: "Événements et festivals",
+    mySpecialsDesc: "Offres et promotions spéciales",
     myAssistantDesc: "Votre assistant personnel",
     myContactsDesc: "Contacts rapides",
     
@@ -197,18 +208,19 @@ const translations = {
     eventTime: "Heure",
     eventLocation: "Lieu",
     allEvents: "Tous les événements",
+
+    // My Specials
+    specialValidUntil: "Valable jusqu'au",
+    specialDiscount: "Réduction",
+    allSpecials: "Toutes les offres",
     
     // My Assistant
     sendMessage: "Envoyer un message",
     yourMessage: "Votre message...",
     chatWithUs: "Chattez avec nous",
-    assistantIntro: "Contactez Oliver, votre assistant personnel pour l'Ombrie !",
+    assistantIntro: "Contactez-nous !",
     assistantWelcome: "Nous serons heureux de répondre à vos questions.",
     availableHours: "Disponible",
-    
-    // Footer
-    madeWith: "Réalisé avec",
-    for: "pour",
     
     // Erreurs
     errorLoading: "Erreur de chargement des données",
@@ -219,17 +231,20 @@ const translations = {
     // Hauptmenü
     appName: "MyLyfe",
     appTagline: "Ihr persönlicher Führer in Umbrien",
-    myHome: "My Home",
-    myJourney: "My Journey",
-    myTaste: "My Taste",
-    myEvents: "My Events",
-    myAssistant: "My Assistant",
+    welcome: "Willkommen!",
+    myHome: "Home",
+    myJourney: "Journey",
+    myTaste: "Taste",
+    myEvents: "Events",
+    mySpecials: "Specials",
+    myAssistant: "Assistant",
     
     // Menübeschreibungen
     myHomeDesc: "Anweisungen für das Landhaus",
     myJourneyDesc: "Ihr Reiseführer",
     myTasteDesc: "Restaurants und Verkostungen",
     myEventsDesc: "Veranstaltungen und Festivals",
+    mySpecialsDesc: "Sonderangebote und Aktionen",
     myAssistantDesc: "Ihr persönlicher Assistent",
     myContactsDesc: "Schnellkontakte",
     
@@ -268,18 +283,19 @@ const translations = {
     eventTime: "Uhrzeit",
     eventLocation: "Ort",
     allEvents: "Alle Veranstaltungen",
+
+    // My Specials
+    specialValidUntil: "Gültig bis",
+    specialDiscount: "Rabatt",
+    allSpecials: "Alle Angebote",
     
     // My Assistant
     sendMessage: "Nachricht senden",
     yourMessage: "Ihre Nachricht...",
     chatWithUs: "Chatten Sie mit uns",
-    assistantIntro: "Kontaktieren Sie Oliver, Ihren persönlichen Assistenten für Umbrien!",
+    assistantIntro: "Kontaktieren Sie uns",
     assistantWelcome: "Wir beantworten gerne Ihre Fragen.",
     availableHours: "Verfügbar",
-    
-    // Footer
-    madeWith: "Erstellt mit",
-    for: "für",
     
     // Fehler
     errorLoading: "Fehler beim Laden der Daten",
@@ -290,17 +306,20 @@ const translations = {
     // Menú principal
     appName: "MyLyfe",
     appTagline: "Tu guía personal en Umbría",
-    myHome: "My Home",
-    myJourney: "My Journey",
-    myTaste: "My Taste",
-    myEvents: "My Events",
-    myAssistant: "My Assistant",
+    welcome: "¡Bienvenido!",
+    myHome: "Home",
+    myJourney: "Journey",
+    myTaste: "Taste",
+    myEvents: "Events",
+    mySpecials: "Specials",
+    myAssistant: "Assistant",
     
     // Descripciones menú
     myHomeDesc: "Instrucciones de la casa rural",
     myJourneyDesc: "Tu guía turística",
     myTasteDesc: "Restaurantes y degustaciones",
     myEventsDesc: "Eventos y festivales",
+    mySpecialsDesc: "Ofertas y promociones especiales",
     myAssistantDesc: "Tu asistente personal",
     myContactsDesc: "Contactos rápidos",
     
@@ -339,18 +358,19 @@ const translations = {
     eventTime: "Hora",
     eventLocation: "Lugar",
     allEvents: "Todos los eventos",
+
+    // My Specials
+    specialValidUntil: "Válido hasta",
+    specialDiscount: "Descuento",
+    allSpecials: "Todas las ofertas",
     
     // My Assistant
     sendMessage: "Enviar mensaje",
     yourMessage: "Tu mensaje...",
     chatWithUs: "Chatea con nosotros",
-    assistantIntro: "¡Contacta a Oliver, tu asistente personal para Umbría!",
+    assistantIntro: "¡Contáctanos !",
     assistantWelcome: "Estaremos encantados de responder a tus preguntas.",
     availableHours: "Disponible",
-    
-    // Footer
-    madeWith: "Hecho con",
-    for: "para",
     
     // Errores
     errorLoading: "Error al cargar datos",
