@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Genera Screenshot PWA - MyLyfe Umbria</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 900px; margin: 2rem auto; padding: 1rem; }
+        h1 { color: #6da34d; }
+        .preview { border: 1px solid #ccc; margin: 1rem 0; }
+        canvas { display: block; }
+        button { background: #6da34d; color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 8px; cursor: pointer; font-size: 1rem; margin: 0.5rem 0.5rem 0.5rem 0; }
+        button:hover { background: #5a8a3f; }
+        .info { background: #f0f8e8; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+    </style>
+</head>
+<body>
+    <h1>🖼️ Genera Screenshot PWA</h1>
+    <div class="info">
+        <p><strong>Istruzioni:</strong> Clicca i pulsanti per scaricare gli screenshot, poi copiali nella cartella <code>public/icons/</code></p>
+        <p>Questi screenshot sono necessari per la UI di installazione PWA su Chrome Android 119+</p>
+    </div>
+
+    <h2>Screenshot Narrow (540×960) — Per smartphone</h2>
+    <canvas id="narrow" width="540" height="960"></canvas>
+    <button onclick="download('narrow', 'screenshot-narrow.png')">📥 Scarica screenshot-narrow.png</button>
+
+    <h2>Screenshot Wide (1024×576) — Per tablet/desktop</h2>
+    <canvas id="wide" width="1024" height="576"></canvas>
+    <button onclick="download('wide', 'screenshot-wide.png')">📥 Scarica screenshot-wide.png</button>
+
+    <script>
+        const THEME = '#6da34d';
+        const THEME_LIGHT = '#c5e99b';
+        const BG = '#F5F5F5';
+
+        function drawNarrow() {
+            const c = document.getElementById('narrow');
+            const ctx = c.getContext('2d');
+            const W = c.width, H = c.height;
+
+            // Background
+            ctx.fillStyle = BG;
+            ctx.fillRect(0, 0, W, H);
+
+            // Status bar
+            ctx.fillStyle = THEME;
+            ctx.fillRect(0, 0, W, 48);
+
+            // Header
+            const grad = ctx.createLinearGradient(0, 48, 0, 160);
+            grad.addColorStop(0, THEME);
+            grad.addColorStop(1, THEME_LIGHT);
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 48, W, 112);
+
+            // Title in header
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 32px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('MyLyfe Umbria', W/2, 115);
+            ctx.font = '18px Arial';
+            ctx.fillText('La tua guida personale in Umbria', W/2, 145);
+
+            // Search bar
+            ctx.fillStyle = '#fff';
+            roundRect(ctx, 30, 180, W-60, 48, 24);
+            ctx.fillStyle = '#999';
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText('🔍 Cerca eventi, luoghi...', 55, 210);
+
+            // Category chips
+            const cats = ['🎭 Eventi', '🍽️ Ristoranti', '🏛️ Musei', '🌿 Natura'];
+            let cx = 30;
+            cats.forEach(cat => {
+                const w = ctx.measureText(cat).width + 30;
+                ctx.fillStyle = '#e8f5e0';
+                roundRect(ctx, cx, 248, w, 36, 18);
+                ctx.fillStyle = THEME;
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillText(cat, cx + 15, 271);
+                cx += w + 10;
+            });
+
+            // Cards
+            const cards = [
+                { title: 'Umbria Jazz 2026', sub: '📍 Perugia · 10-19 Luglio', color: '#e3f2fd' },
+                { title: 'Sagra del Tartufo', sub: '📍 Norcia · 25-28 Febbraio', color: '#fff3e0' },
+                { title: 'Festival dei Due Mondi', sub: '📍 Spoleto · 26 Giu - 12 Lug', color: '#fce4ec' },
+                { title: 'Eurochocolate', sub: '📍 Perugia · 18-27 Ottobre', color: '#f3e5f5' },
+            ];
+            let cy = 310;
+            cards.forEach(card => {
+                ctx.fillStyle = '#fff';
+                ctx.shadowColor = 'rgba(0,0,0,0.1)';
+                ctx.shadowBlur = 8;
+                ctx.shadowOffsetY = 2;
+                roundRect(ctx, 20, cy, W-40, 110, 16);
+                ctx.shadowColor = 'transparent';
+
+                // Color accent
+                ctx.fillStyle = card.color;
+                roundRectClip(ctx, 20, cy, 8, 110, 16, 'left');
+
+                ctx.fillStyle = '#333';
+                ctx.font = 'bold 20px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillText(card.title, 45, cy + 40);
+                ctx.fillStyle = '#666';
+                ctx.font = '15px Arial';
+                ctx.fillText(card.sub, 45, cy + 68);
+
+                // Faux button
+                ctx.fillStyle = THEME;
+                roundRect(ctx, W - 140, cy + 65, 100, 30, 15);
+                ctx.fillStyle = '#fff';
+                ctx.font = '13px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Scopri →', W - 90, cy + 85);
+
+                cy += 130;
+            });
+
+            // Bottom nav
+            ctx.fillStyle = '#fff';
+            ctx.shadowColor = 'rgba(0,0,0,0.1)';
+            ctx.shadowBlur = 10;
+            ctx.shadowOffsetY = -2;
+            ctx.fillRect(0, H - 70, W, 70);
+            ctx.shadowColor = 'transparent';
+
+            const navItems = ['🏠 Home', '🗺️ Mappa', '📅 Eventi', '❤️ Preferiti', '👤 Profilo'];
+            const navW = W / navItems.length;
+            navItems.forEach((item, i) => {
+                ctx.fillStyle = i === 0 ? THEME : '#888';
+                ctx.font = '13px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(item, navW * i + navW/2, H - 25);
+            });
+        }
+
+        function drawWide() {
+            const c = document.getElementById('wide');
+            const ctx = c.getContext('2d');
+            const W = c.width, H = c.height;
+
+            // Background
+            ctx.fillStyle = BG;
+            ctx.fillRect(0, 0, W, H);
+
+            // Header
+            const grad = ctx.createLinearGradient(0, 0, W, 0);
+            grad.addColorStop(0, THEME);
+            grad.addColorStop(1, THEME_LIGHT);
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, W, 80);
+
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 30px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText('MyLyfe Umbria', 30, 50);
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'right';
+            ctx.fillText('La tua guida personale in Umbria', W - 30, 50);
+
+            // Sidebar
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 80, 220, H - 80);
+            const menuItems = ['🏠 Home', '🗺️ Mappa', '📅 Eventi', '🍽️ Ristoranti', '🏛️ Musei', '🌿 Natura', '❤️ Preferiti'];
+            menuItems.forEach((item, i) => {
+                if (i === 0) {
+                    ctx.fillStyle = '#e8f5e0';
+                    ctx.fillRect(0, 80 + i * 48, 220, 48);
+                }
+                ctx.fillStyle = i === 0 ? THEME : '#555';
+                ctx.font = '15px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillText(item, 20, 112 + i * 48);
+            });
+
+            // Main content area - cards grid
+            const cards = [
+                { title: 'Umbria Jazz', sub: 'Perugia · Luglio', color: '#e3f2fd' },
+                { title: 'Sagra del Tartufo', sub: 'Norcia · Febbraio', color: '#fff3e0' },
+                { title: 'Festival Due Mondi', sub: 'Spoleto · Giugno', color: '#fce4ec' },
+                { title: 'Eurochocolate', sub: 'Perugia · Ottobre', color: '#f3e5f5' },
+                { title: 'Corsa dei Ceri', sub: 'Gubbio · Maggio', color: '#e0f7fa' },
+                { title: 'Infiorata', sub: 'Spello · Giugno', color: '#fff8e1' },
+            ];
+            const cols = 3;
+            const cardW = 240;
+            const cardH = 180;
+            const startX = 250;
+            const startY = 110;
+
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 22px Arial';
+            ctx.fillText('Eventi in evidenza', startX, startY - 10);
+
+            cards.forEach((card, i) => {
+                const col = i % cols;
+                const row = Math.floor(i / cols);
+                const x = startX + col * (cardW + 16);
+                const y = startY + 10 + row * (cardH + 16);
+
+                ctx.fillStyle = '#fff';
+                ctx.shadowColor = 'rgba(0,0,0,0.08)';
+                ctx.shadowBlur = 6;
+                roundRect(ctx, x, y, cardW, cardH, 12);
+                ctx.shadowColor = 'transparent';
+
+                // Top color bar
+                ctx.fillStyle = card.color;
+                roundRectClip(ctx, x, y, cardW, 6, 12, 'top');
+
+                ctx.fillStyle = '#333';
+                ctx.font = 'bold 18px Arial';
+                ctx.fillText(card.title, x + 16, y + 50);
+                ctx.fillStyle = '#666';
+                ctx.font = '14px Arial';
+                ctx.fillText('📍 ' + card.sub, x + 16, y + 78);
+
+                ctx.fillStyle = THEME;
+                roundRect(ctx, x + 16, y + cardH - 50, 100, 30, 15);
+                ctx.fillStyle = '#fff';
+                ctx.font = '13px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Scopri →', x + 66, y + cardH - 30);
+                ctx.textAlign = 'left';
+            });
+        }
+
+        // Helper: rounded rectangle
+        function roundRect(ctx, x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + w - r, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+            ctx.lineTo(x + w, y + h - r);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            ctx.lineTo(x + r, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        // Helper: partial rounded rect for accent bars
+        function roundRectClip(ctx, x, y, w, h, r, side) {
+            ctx.beginPath();
+            if (side === 'left') {
+                ctx.moveTo(x + r, y);
+                ctx.lineTo(x + w, y);
+                ctx.lineTo(x + w, y + h);
+                ctx.lineTo(x + r, y + h);
+                ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+                ctx.lineTo(x, y + r);
+                ctx.quadraticCurveTo(x, y, x + r, y);
+            } else if (side === 'top') {
+                ctx.moveTo(x + r, y);
+                ctx.lineTo(x + w - r, y);
+                ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+                ctx.lineTo(x + w, y + h);
+                ctx.lineTo(x, y + h);
+                ctx.lineTo(x, y + r);
+                ctx.quadraticCurveTo(x, y, x + r, y);
+            }
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function download(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        // Draw on load
+        drawNarrow();
+        drawWide();
+    </script>
+</body>
+</html>
