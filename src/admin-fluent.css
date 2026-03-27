@@ -6,15 +6,15 @@
 /* ---------- Design Tokens ---------- */
 :root {
   /* Brand (platform green) */
-  --fl-brand:            #6da34d;
+  --fl-brand:            #87a34d;
   --fl-brand-hover:      #5d8e42;
   --fl-brand-pressed:    #4e7837;
   --fl-brand-tint1:      #e8f4e0;
-  --fl-brand-tint2:      #c5e99b;
-  --fl-brand-shadow:     rgba(109,163,77,0.22);
+  --fl-brand-tint2:      #B8DECA;
+  --fl-brand-shadow:     rgba(135,163,77,0.22);
 
   /* Secondary (platform dark green) */
-  --fl-secondary:        #3d6b2a;
+  --fl-secondary:        #1B6B3A;
   --fl-secondary-hover:  #326022;
   --fl-secondary-tint:   #e5f2d8;
 
@@ -124,7 +124,7 @@
   position: absolute;
   top: -120px; right: -120px;
   width: 360px; height: 360px;
-  background: radial-gradient(circle, rgba(109,163,77,0.18), transparent 70%);
+  background: radial-gradient(circle, rgba(135,163,77,0.18), transparent 70%);
   border-radius: 50%;
 }
 .fl-brand-panel::after {
@@ -132,7 +132,7 @@
   position: absolute;
   bottom: -80px; left: -80px;
   width: 280px; height: 280px;
-  background: radial-gradient(circle, rgba(197,233,155,0.12), transparent 70%);
+  background: radial-gradient(circle, rgba(184,222,202,0.12), transparent 70%);
   border-radius: 50%;
 }
 
@@ -1430,6 +1430,48 @@
   color: var(--fl-fg-1);
 }
 
+/* Language panel (shown/hidden by tab control) */
+.fl-lang-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--fl-sp-4);
+  padding-top: var(--fl-sp-2);
+}
+.fl-lang-panel[hidden] {
+  display: none !important;
+}
+
+/* Required star inside lang panels */
+.fl-required-star {
+  color: var(--fl-error, #d9534f);
+}
+
+/* Notes editor: toolbar + tab bar + editor panel visually joined */
+.fl-notes-editor-wrap .fl-lang-tabs {
+  border: 1px solid var(--fl-stroke-1);
+  border-top: none;
+  margin-bottom: 0;
+  border-radius: 0;
+}
+.fl-notes-editor-wrap .fl-lang-panel {
+  border: 1px solid var(--fl-stroke-1);
+  border-top: none;
+  border-radius: 0 0 var(--fl-r-md) var(--fl-r-md);
+  padding: 10px 12px;
+  gap: 0;
+}
+.fl-notes-editor-wrap .fl-html-editor {
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  min-height: 110px;
+  box-shadow: none;
+}
+.fl-notes-editor-wrap .fl-html-editor:focus {
+  border: none;
+  box-shadow: none;
+}
+
 /* Multi-lang stacked (always visible) */
 .fl-multilang-group {
   display: flex;
@@ -1457,7 +1499,7 @@
 }
 .fl-lang-badge.fl-lang-required {
   background: var(--fl-brand-tint1);
-  border-color: rgba(109,163,77,0.3);
+  border-color: rgba(135,163,77,0.3);
   color: var(--fl-brand);
 }
 

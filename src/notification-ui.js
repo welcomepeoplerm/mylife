@@ -25,7 +25,7 @@ export function showNotificationPermissionBanner() {
     return;
   }
   
-  console.log('✅ Creazione banner notifiche...');
+  console.log('Creazione banner notifiche...');
   
   const banner = document.createElement('div');
   banner.className = 'notification-banner';
@@ -34,7 +34,7 @@ export function showNotificationPermissionBanner() {
     bottom: 0;
     left: 0;
     right: 0;
-    background: linear-gradient(135deg, #6da34d 0%, #c5e99b 100%);
+    background: linear-gradient(135deg, #87a34d 0%, #B8DECA 100%);
     color: white;
     padding: 1rem;
     box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
@@ -54,7 +54,7 @@ export function showNotificationPermissionBanner() {
     <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
       <button id="enable-notifications-btn" style="
         background: white;
-        color: #6da34d;
+        color: #87a34d;
         border: none;
         padding: 0.5rem 1rem;
         border-radius: 6px;
@@ -125,7 +125,7 @@ export function showNotificationPermissionBanner() {
       localStorage.setItem('notificationBannerDismissed', 'true');
       
       // Mostra messaggio di conferma
-      showNotificationToast('✅ Notifiche attivate!', 'success');
+      showNotificationToast('Notifiche attivate!', 'success');
     } catch (error) {
       console.error('❌ Error enabling notifications:', error);
       console.error('📋 Error code:', error.code);
@@ -320,7 +320,7 @@ export function createNotificationSettingsButton() {
       try {
         await notificationService.requestPermission();
         await notificationService.testNotification();
-        showNotificationToast('✅ Notifiche attivate!', 'success');
+        showNotificationToast('Notifiche attivate!', 'success');
         
         // Ricarica il pulsante
         button.replaceWith(createNotificationSettingsButton());

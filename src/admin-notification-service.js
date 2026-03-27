@@ -40,29 +40,38 @@ export async function sendNotificationForNewEvent(event) {
     }
     
     // Prepara il messaggio della notifica
-    const currentLang = 'it'; // Default italiano per le notifiche
-    const eventTitle = event.titolo?.[currentLang] || event.titolo?.it || 'Nuovo Evento';
-    const eventDescription = event.descrizione?.[currentLang] || event.descrizione?.it || '';
-    
-    // Formato data evento in italiano
-    let eventDateText = '';
-    if (event.dataEvento) {
-      const date = new Date(event.dataEvento);
-      eventDateText = date.toLocaleDateString('it-IT', { 
-        day: 'numeric', 
+    const currentLang = 'it';
+    const isSpecial = event._collectionType === 'specials';
+    const itemTitle = event.titolo?.[currentLang] || event.titolo?.it || (isSpecial ? 'Nuova Offerta' : 'Nuovo Evento');
+    const itemDescription = event.descrizione?.[currentLang] || event.descrizione?.it || '';
+
+    // Formato data
+    let dateText = '';
+    const dateField = isSpecial ? event.validoFino : event.dataEvento;
+    if (dateField) {
+      const date = new Date(dateField);
+      dateText = date.toLocaleDateString('it-IT', {
+        day: 'numeric',
         month: 'long',
         year: 'numeric'
       });
     }
-    
+
+    const notificationTitle = isSpecial ? '⭐ Nuova Offerta Speciale!' : '🎉 Nuovo Evento in Umbria!';
+    const notificationBody = isSpecial
+      ? `${itemTitle}${event.sconto ? ' — ' + event.sconto : ''}${dateText ? ' (fino al ' + dateText + ')' : ''}`
+      : `${itemTitle}${dateText ? ' - ' + dateText : ''}`;
+    const detailUrl = isSpecial
+      ? `/#/specials/detail/${event.id || ''}`
+      : `/#/events/detail/${event.id || ''}`;
     const notificationData = {
-      title: '🎉 Nuovo Evento in Umbria!',
-      body: `${eventTitle}${eventDateText ? ` - ${eventDateText}` : ''}`,
+      title: notificationTitle,
+      body: notificationBody,
       data: {
         eventId: event.id || '',
-        eventTitle: eventTitle,
-        url: `/#/events/detail/${event.id || ''}`,
-        type: 'new-event',
+        eventTitle: itemTitle,
+        url: detailUrl,
+        type: isSpecial ? 'new-special' : 'new-event',
         timestamp: new Date().toISOString()
       },
       createdAt: new Date().toISOString(),

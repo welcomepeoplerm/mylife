@@ -1,358 +1,91 @@
-// SVG Icons per i settori dell'app
+﻿// SVG Icons per i settori dell'app
 
 export const sectorIcons = {
   home: `
-    <svg viewBox="0 0 120 120" class="sector-icon">
-      <defs>
-        <linearGradient id="homeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style="stop-color:#6da34d;stop-opacity:1" />
-          <stop offset="100%" style="stop-color:#c5e99b;stop-opacity:1" />
-        </linearGradient>
-        <linearGradient id="roofGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" style="stop-color:#8d9c71;stop-opacity:1" />
-          <stop offset="100%" style="stop-color:#6da34d;stop-opacity:1" />
-        </linearGradient>
-      </defs>
-      
-      <!-- Ombra sotto -->
-      <ellipse cx="60" cy="98" rx="45" ry="5" fill="#4a7a35" opacity="0.2"/>
-      
-      <!-- Base della casa (muro) -->
-      <rect x="30" y="55" width="60" height="45" rx="2" fill="white"/>
-      <rect x="30" y="55" width="60" height="45" rx="2" fill="url(#homeGrad)" opacity="0.15"/>
-      
-      <!-- Finestre -->
-      <rect x="40" y="65" width="12" height="12" rx="1" fill="#548687" opacity="0.6"/>
-      <line x1="46" y1="65" x2="46" y2="77" stroke="white" stroke-width="1.5" opacity="0.4"/>
-      <line x1="40" y1="71" x2="52" y2="71" stroke="white" stroke-width="1.5" opacity="0.4"/>
-      
-      <rect x="68" y="65" width="12" height="12" rx="1" fill="#548687" opacity="0.6"/>
-      <line x1="74" y1="65" x2="74" y2="77" stroke="white" stroke-width="1.5" opacity="0.4"/>
-      <line x1="68" y1="71" x2="80" y2="71" stroke="white" stroke-width="1.5" opacity="0.4"/>
-      
+    <svg viewBox="0 0 48 48" class="sector-icon" fill="none">
+      <!-- Casa con riempimento verde - stile icona mockup -->
+      <path d="M24 6 L4 24 L10 24 L10 42 L38 42 L38 24 L44 24 Z" fill="#c8d8a0" stroke="#87a34d" stroke-width="2.5" stroke-linejoin="round"/>
       <!-- Porta -->
-      <rect x="52" y="78" width="16" height="22" rx="2" fill="#4a7a35"/>
-      <circle cx="63" cy="90" r="1.5" fill="#c5e99b"/>
-      <line x1="60" y1="78" x2="60" y2="100" stroke="#8d9c71" stroke-width="1" opacity="0.3"/>
-      
-      <!-- Tetto 3D -->
-      <path d="M 25 55 L 60 25 L 95 55 L 90 55 L 60 30 L 30 55 Z" fill="url(#roofGrad)"/>
-      <path d="M 60 25 L 95 55 L 95 50 L 60 20 Z" fill="#6da34d" opacity="0.8"/>
-      
-      <!-- Bordo del tetto -->
-      <path d="M 25 55 L 60 25 L 95 55" stroke="#4a7a35" stroke-width="2" fill="none" stroke-linejoin="round"/>
-      
-      <!-- Camino -->
-      <rect x="72" y="38" width="8" height="14" fill="#4a7a35"/>
-      <rect x="70" y="36" width="12" height="3" rx="1" fill="#8d9c71"/>
-      
-      <!-- Fumetto dal camino -->
-      <circle cx="76" cy="30" r="3" fill="#548687" opacity="0.3"/>
-      <circle cx="78" cy="26" r="3.5" fill="#548687" opacity="0.25"/>
-      <circle cx="80" cy="22" r="4" fill="#548687" opacity="0.2"/>
-      
-      <!-- Dettagli decorativi -->
-      <rect x="30" y="53" width="60" height="2" fill="#8d9c71" opacity="0.5"/>
-      
-      <!-- Piante ai lati -->
-      <ellipse cx="20" cy="95" rx="6" ry="8" fill="#6da34d" opacity="0.6"/>
-      <ellipse cx="18" cy="92" rx="4" ry="6" fill="#c5e99b" opacity="0.5"/>
-      
-      <ellipse cx="100" cy="95" rx="6" ry="8" fill="#6da34d" opacity="0.6"/>
-      <ellipse cx="102" cy="92" rx="4" ry="6" fill="#c5e99b" opacity="0.5"/>
+      <rect x="19" y="28" width="10" height="14" rx="1" fill="#87a34d" opacity="0.6"/>
     </svg>
   `,
   
   journey: `
-    <svg viewBox="0 0 120 120" class="sector-icon">
-      <defs>
-        <linearGradient id="mapGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style="stop-color:#f5f5f5;stop-opacity:1" />
-          <stop offset="100%" style="stop-color:#e8e8e8;stop-opacity:1" />
-        </linearGradient>
-        <radialGradient id="pinGrad" cx="50%" cy="30%">
-          <stop offset="0%" style="stop-color:#c5e99b;stop-opacity:1" />
-          <stop offset="100%" style="stop-color:#6da34d;stop-opacity:1" />
-        </radialGradient>
-      </defs>
-      
-      <!-- Ombra sotto -->
-      <ellipse cx="60" cy="98" rx="45" ry="5" fill="#4a7a35" opacity="0.2"/>
-      
-      <!-- Mappa piegata - pezzo sinistro -->
-      <path d="M 25 35 L 55 35 L 55 85 L 25 85 Z" fill="white"/>
-      <path d="M 25 35 L 55 35 L 55 85 L 25 85 Z" fill="url(#mapGrad)"/>
-      
-      <!-- Mappa piegata - pezzo destro -->
-      <path d="M 55 35 L 95 35 L 95 85 L 55 85 Z" fill="white"/>
-      <path d="M 55 35 L 95 35 L 95 85 L 55 85 Z" fill="url(#mapGrad)" opacity="0.8"/>
-      
-      <!-- Piega centrale -->
-      <line x1="55" y1="35" x2="55" y2="85" stroke="#d0d0d0" stroke-width="2"/>
-      
-      <!-- Bordo mappa -->
-      <rect x="25" y="35" width="70" height="50" rx="2" fill="none" stroke="#8d9c71" stroke-width="2"/>
-      
-      <!-- Griglia della mappa -->
-      <line x1="35" y1="35" x2="35" y2="85" stroke="#c5e99b" stroke-width="1" opacity="0.3"/>
-      <line x1="45" y1="35" x2="45" y2="85" stroke="#c5e99b" stroke-width="1" opacity="0.3"/>
-      <line x1="65" y1="35" x2="65" y2="85" stroke="#c5e99b" stroke-width="1" opacity="0.3"/>
-      <line x1="75" y1="35" x2="75" y2="85" stroke="#c5e99b" stroke-width="1" opacity="0.3"/>
-      <line x1="85" y1="35" x2="85" y2="85" stroke="#c5e99b" stroke-width="1" opacity="0.3"/>
-      
-      <line x1="25" y1="45" x2="95" y2="45" stroke="#c5e99b" stroke-width="1" opacity="0.3"/>
-      <line x1="25" y1="55" x2="95" y2="55" stroke="#c5e99b" stroke-width="1" opacity="0.3"/>
-      <line x1="25" y1="65" x2="95" y2="65" stroke="#c5e99b" stroke-width="1" opacity="0.3"/>
-      <line x1="25" y1="75" x2="95" y2="75" stroke="#c5e99b" stroke-width="1" opacity="0.3"/>
-      
-      <!-- Strade sulla mappa -->
-      <path d="M 30 50 Q 45 48 60 55" stroke="#548687" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-      <path d="M 60 55 Q 70 60 85 58" stroke="#548687" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-      <circle cx="45" cy="48" r="2" fill="#8d9c71"/>
-      <circle cx="70" cy="60" r="2" fill="#8d9c71"/>
-      
-      <!-- Pin di posizione 3D principale -->
-      <ellipse cx="60" cy="72" rx="8" ry="3" fill="#6da34d" opacity="0.3"/>
-      <path d="M 52 55 Q 52 48 60 45 Q 68 48 68 55 Q 68 60 60 72 Q 52 60 52 55" fill="url(#pinGrad)"/>
-      <circle cx="60" cy="52" r="6" fill="white"/>
-      <circle cx="60" cy="52" r="3" fill="#6da34d"/>
-      
-      <!-- Bussola decorativa nell'angolo -->
-      <circle cx="82" cy="73" r="8" fill="white"/>
-      <circle cx="82" cy="73" r="8" fill="none" stroke="#8d9c71" stroke-width="1.5"/>
-      <path d="M 82 67 L 82 79" stroke="#4a7a35" stroke-width="1" opacity="0.5"/>
-      <path d="M 76 73 L 88 73" stroke="#4a7a35" stroke-width="1" opacity="0.5"/>
-      <path d="M 82 67 L 84 73 L 82 75 Z" fill="#6da34d"/>
-      <path d="M 82 79 L 80 73 L 82 71 Z" fill="#c5e99b"/>
-      
-      <!-- Aree colorate (zone turistiche) -->
-      <circle cx="38" cy="60" r="5" fill="#c5e99b" opacity="0.4"/>
-      <circle cx="75" cy="50" r="4" fill="#6da34d" opacity="0.3"/>
+    <svg viewBox="0 0 48 48" class="sector-icon" fill="none">
+      <!-- Mappa con pin - stile filled mockup -->
+      <rect x="6" y="8" width="36" height="32" rx="3" fill="#c8d8a0" stroke="#87a34d" stroke-width="2.5"/>
+      <!-- Pieghe mappa -->
+      <line x1="18" y1="8" x2="18" y2="40" stroke="#87a34d" stroke-width="1.5" opacity="0.4"/>
+      <line x1="30" y1="8" x2="30" y2="40" stroke="#87a34d" stroke-width="1.5" opacity="0.4"/>
+      <!-- Pin -->
+      <path d="M24 16 C20 16 17 19 17 22.5 C17 27 24 33 24 33 C24 33 31 27 31 22.5 C31 19 28 16 24 16Z" fill="#87a34d" stroke="#5c7a2e" stroke-width="1.5"/>
+      <circle cx="24" cy="22.5" r="2.5" fill="#fff"/>
     </svg>
   `,
   
   taste: `
-    <svg viewBox="0 0 120 120" class="sector-icon">
-      <defs>
-        <radialGradient id="tasteGrad" cx="50%" cy="40%">
-          <stop offset="0%" style="stop-color:#c5e99b;stop-opacity:1" />
-          <stop offset="100%" style="stop-color:#6da34d;stop-opacity:1" />
-        </radialGradient>
-        <linearGradient id="plateGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style="stop-color:#f5f5f5;stop-opacity:1" />
-          <stop offset="100%" style="stop-color:#e8e8e8;stop-opacity:1" />
-        </linearGradient>
-      </defs>
-      
-      <!-- Ombra sotto -->
-      <ellipse cx="60" cy="98" rx="42" ry="5" fill="#4a7a35" opacity="0.2"/>
-      
-      <!-- Piatto principale -->
-      <ellipse cx="60" cy="75" rx="48" ry="12" fill="#d0d0d0"/>
-      <ellipse cx="60" cy="74" rx="47" ry="11" fill="url(#plateGrad)"/>
-      <ellipse cx="60" cy="73" rx="45" ry="10" fill="white"/>
-      <ellipse cx="60" cy="73" rx="38" ry="8" fill="#f9f9f9"/>
-      
-      <!-- Cibo sul piatto - Pasta/Verdure -->
-      <!-- Base pasta -->
-      <ellipse cx="60" cy="65" rx="22" ry="6" fill="#c5e99b" opacity="0.9"/>
-      
-      <!-- Spaghetti arrotolati -->
-      <path d="M 50 60 Q 52 58 54 60 Q 56 62 58 60 Q 60 58 62 60" stroke="#6da34d" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-      <path d="M 52 63 Q 54 61 56 63 Q 58 65 60 63 Q 62 61 64 63" stroke="#6da34d" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-      <path d="M 48 65 Q 50 63 52 65 Q 54 67 56 65" stroke="#8d9c71" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-      <path d="M 60 66 Q 62 64 64 66 Q 66 68 68 66" stroke="#8d9c71" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-      
-      <!-- Pomodorini -->
-      <circle cx="52" cy="58" r="4" fill="#d84315" opacity="0.8"/>
-      <circle cx="68" cy="60" r="4" fill="#d84315" opacity="0.8"/>
-      <circle cx="60" cy="56" r="3.5" fill="#e53935" opacity="0.7"/>
-      
-      <!-- Basilico -->
-      <ellipse cx="56" cy="62" rx="3" ry="4" fill="#6da34d" opacity="0.8"/>
-      <ellipse cx="64" cy="64" rx="3" ry="4" fill="#6da34d" opacity="0.8"/>
-      
-      <!-- Forchetta a sinistra -->
-      <line x1="22" y1="75" x2="22" y2="45" stroke="#8d9c71" stroke-width="3" stroke-linecap="round"/>
-      <line x1="18" y1="45" x2="18" y2="52" stroke="#8d9c71" stroke-width="2.5" stroke-linecap="round"/>
-      <line x1="22" y1="45" x2="22" y2="52" stroke="#8d9c71" stroke-width="2.5" stroke-linecap="round"/>
-      <line x1="26" y1="45" x2="26" y2="52" stroke="#8d9c71" stroke-width="2.5" stroke-linecap="round"/>
-      
-      <!-- Coltello a destra -->
-      <line x1="98" y1="75" x2="98" y2="45" stroke="#4a7a35" stroke-width="3" stroke-linecap="round"/>
-      <path d="M 95 45 L 101 45 L 101 50 L 95 50 Z" fill="#4a7a35"/>
-      <line x1="98" y1="50" x2="98" y2="54" stroke="#4a7a35" stroke-width="4"/>
-      
-      <!-- Vapore caldo -->
-      <path d="M 48 48 Q 50 42 52 48" stroke="#548687" stroke-width="2" fill="none" opacity="0.4" stroke-linecap="round"/>
-      <path d="M 58 45 Q 60 39 62 45" stroke="#548687" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/>
-      <path d="M 68 48 Q 70 42 72 48" stroke="#548687" stroke-width="2" fill="none" opacity="0.4" stroke-linecap="round"/>
+    <svg viewBox="0 0 48 48" class="sector-icon" fill="none">
+      <!-- Forchetta e coltello - stile filled mockup -->
+      <!-- Forchetta -->
+      <path d="M12 8 L12 18 Q12 24 16 24 L16 40" stroke="#87a34d" stroke-width="3" stroke-linecap="round" fill="none"/>
+      <line x1="16" y1="8" x2="16" y2="18" stroke="#87a34d" stroke-width="3" stroke-linecap="round"/>
+      <line x1="20" y1="8" x2="20" y2="18" stroke="#87a34d" stroke-width="3" stroke-linecap="round"/>
+      <path d="M20 18 Q20 24 16 24" stroke="#87a34d" stroke-width="3" fill="none"/>
+      <!-- Coltello -->
+      <path d="M32 8 C32 8 38 10 38 20 C38 24 32 24 32 24 L32 40" stroke="#87a34d" stroke-width="3" stroke-linecap="round" fill="#c8d8a0"/>
     </svg>
   `,
-  
+
   assistant: `
-    <svg viewBox="0 0 120 120" class="sector-icon">
-      <defs>
-        <radialGradient id="assistantGrad" cx="50%" cy="30%">
-          <stop offset="0%" style="stop-color:#c5e99b;stop-opacity:1" />
-          <stop offset="100%" style="stop-color:#6da34d;stop-opacity:1" />
-        </radialGradient>
-        <radialGradient id="antennaGrad" cx="50%" cy="50%">
-          <stop offset="0%" style="stop-color:#c5e99b;stop-opacity:1" />
-          <stop offset="100%" style="stop-color:#8d9c71;stop-opacity:1" />
-        </radialGradient>
-      </defs>
-      
-      <!-- Corpo principale (sfera verde) -->
-      <circle cx="60" cy="65" r="35" fill="url(#assistantGrad)"/>
-      
-      <!-- Ombra sotto -->
-      <ellipse cx="60" cy="95" rx="30" ry="5" fill="#4a7a35" opacity="0.2"/>
-      
-      <!-- Antenne -->
-      <line x1="48" y1="32" x2="48" y2="18" stroke="#8d9c71" stroke-width="3" stroke-linecap="round"/>
-      <circle cx="48" cy="15" r="6" fill="url(#antennaGrad)"/>
-      
-      <line x1="72" y1="32" x2="72" y2="18" stroke="#8d9c71" stroke-width="3" stroke-linecap="round"/>
-      <circle cx="72" cy="15" r="6" fill="url(#antennaGrad)"/>
-      
-      <!-- Occhi -->
-      <circle cx="50" cy="60" r="7" fill="white"/>
-      <circle cx="70" cy="60" r="7" fill="white"/>
-      <circle cx="50" cy="60" r="5" fill="#4a7a35"/>
-      <circle cx="70" cy="60" r="5" fill="#4a7a35"/>
-      
-      <!-- Riflessi occhi -->
-      <circle cx="51" cy="58" r="2" fill="white" opacity="0.8"/>
-      <circle cx="71" cy="58" r="2" fill="white" opacity="0.8"/>
-      
-      <!-- Bocca sorridente -->
-      <path d="M 47 72 Q 60 80 73 72" stroke="white" stroke-width="4" fill="none" stroke-linecap="round"/>
-      
-      <!-- Dettaglio superiore (buco antenna) -->
-      <ellipse cx="60" cy="35" rx="6" ry="3" fill="#548687" opacity="0.5"/>
-      
-      <!-- Bolle decorative laterali -->
-      <circle cx="88" cy="55" r="8" fill="#c5e99b" opacity="0.3"/>
-      <circle cx="92" cy="65" r="6" fill="#c5e99b" opacity="0.2"/>
-      <circle cx="85" cy="72" r="5" fill="#c5e99b" opacity="0.25"/>
-      
-      <!-- Piccoli dettagli -->
-      <circle cx="38" cy="68" r="3" fill="#8d9c71" opacity="0.4"/>
-      <circle cx="82" cy="68" r="3" fill="#8d9c71" opacity="0.4"/>
+    <svg viewBox="0 0 48 48" class="sector-icon" fill="none">
+      <!-- Assistente chat bot semplice -->
+      <rect x="8" y="10" width="32" height="24" rx="6" stroke="#87a34d" stroke-width="2.5" fill="none"/>
+      <circle cx="18" cy="22" r="2.5" fill="#87a34d"/>
+      <circle cx="30" cy="22" r="2.5" fill="#87a34d"/>
+      <path d="M20 28 Q24 32 28 28" stroke="#87a34d" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <!-- Antenna -->
+      <line x1="24" y1="10" x2="24" y2="5" stroke="#87a34d" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="24" cy="4" r="2" fill="#87a34d"/>
+      <!-- Coda fumetto -->
+      <path d="M16 34 L12 40 L22 34" stroke="#87a34d" stroke-width="2.5" stroke-linejoin="round" fill="none"/>
     </svg>
   `,
   
   events: `
-    <svg viewBox="0 0 120 120" class="sector-icon">
-      <defs>
-        <linearGradient id="eventsGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style="stop-color:#c5e99b;stop-opacity:1" />
-          <stop offset="100%" style="stop-color:#6da34d;stop-opacity:1" />
-        </linearGradient>
-        <linearGradient id="calendarGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
-          <stop offset="100%" style="stop-color:#f5f5f5;stop-opacity:1" />
-        </linearGradient>
-      </defs>
-      
-      <!-- Ombra sotto -->
-      <ellipse cx="60" cy="98" rx="40" ry="5" fill="#4a7a35" opacity="0.2"/>
-      
-      <!-- Corpo del calendario -->
-      <rect x="20" y="30" width="80" height="60" rx="4" fill="url(#calendarGrad)"/>
-      <rect x="20" y="30" width="80" height="60" rx="4" fill="none" stroke="#8d9c71" stroke-width="2"/>
-      
-      <!-- Barra superiore verde -->
-      <rect x="20" y="30" width="80" height="15" rx="4" fill="url(#eventsGrad)"/>
-      <rect x="20" y="38" width="80" height="7" fill="url(#eventsGrad)" opacity="0.8"/>
-      
-      <!-- Anelli di rilegatura -->
-      <rect x="32" y="26" width="6" height="10" rx="3" fill="#548687"/>
-      <rect x="52" y="26" width="6" height="10" rx="3" fill="#548687"/>
-      <rect x="72" y="26" width="6" height="10" rx="3" fill="#548687"/>
-      <rect x="92" y="26" width="6" height="10" rx="3" fill="#548687"/>
-      
-      <!-- Griglia giorni del calendario -->
-      <rect x="28" y="52" width="10" height="8" rx="1" fill="#e8e8e8"/>
-      <rect x="42" y="52" width="10" height="8" rx="1" fill="#e8e8e8"/>
-      <rect x="56" y="52" width="10" height="8" rx="1" fill="#e8e8e8"/>
-      <rect x="70" y="52" width="10" height="8" rx="1" fill="#e8e8e8"/>
-      <rect x="84" y="52" width="10" height="8" rx="1" fill="#e8e8e8"/>
-      
-      <rect x="28" y="63" width="10" height="8" rx="1" fill="#e8e8e8"/>
-      <rect x="42" y="63" width="10" height="8" rx="1" fill="#e8e8e8"/>
-      <rect x="56" y="63" width="10" height="8" rx="1" fill="#e8e8e8"/>
-      <rect x="70" y="63" width="10" height="8" rx="1" fill="#e8e8e8"/>
-      <rect x="84" y="63" width="10" height="8" rx="1" fill="#e8e8e8"/>
-      
-      <rect x="28" y="74" width="10" height="8" rx="1" fill="#e8e8e8"/>
-      <rect x="42" y="74" width="10" height="8" rx="1" fill="#e8e8e8"/>
-      
-      <!-- Giorno evidenziato (evento) -->
-      <rect x="56" y="74" width="10" height="8" rx="1" fill="url(#eventsGrad)"/>
-      <circle cx="61" cy="78" r="2" fill="white"/>
-      
-      <!-- Stelle decorative (eventi speciali) -->
-      <path d="M 70 78 L 71 80 L 73 80 L 71.5 81.5 L 72 83 L 70 82 L 68 83 L 68.5 81.5 L 67 80 L 69 80 Z" fill="#d84315"/>
-      <path d="M 84 78 L 85 80 L 87 80 L 85.5 81.5 L 86 83 L 84 82 L 82 83 L 82.5 81.5 L 81 80 L 83 80 Z" fill="#d84315"/>
-      
-      <!-- Note musicali (festival) -->
-      <ellipse cx="30" cy="79" rx="2" ry="2.5" fill="#548687"/>
-      <line x1="32" y1="79" x2="32" y2="71" stroke="#548687" stroke-width="1.5"/>
-      <path d="M 32 71 Q 35 70 36 72" stroke="#548687" stroke-width="1.5" fill="none"/>
-      
-      <ellipse cx="42" cy="79" rx="2" ry="2.5" fill="#548687"/>
-      <line x1="44" y1="79" x2="44" y2="73" stroke="#548687" stroke-width="1.5"/>
+    <svg viewBox="0 0 48 48" class="sector-icon" fill="none">
+      <!-- Calendario semplice - stile Material 3 -->
+      <rect x="8" y="12" width="32" height="28" rx="3" stroke="#87a34d" stroke-width="2.5" fill="none"/>
+      <!-- Barra superiore -->
+      <line x1="8" y1="20" x2="40" y2="20" stroke="#87a34d" stroke-width="2.5"/>
+      <!-- Anelli -->
+      <line x1="16" y1="8" x2="16" y2="16" stroke="#87a34d" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="32" y1="8" x2="32" y2="16" stroke="#87a34d" stroke-width="2.5" stroke-linecap="round"/>
+      <!-- Punti giorni -->
+      <circle cx="16" cy="26" r="2" fill="#87a34d"/>
+      <circle cx="24" cy="26" r="2" fill="#87a34d"/>
+      <circle cx="32" cy="26" r="2" fill="#87a34d"/>
+      <circle cx="16" cy="33" r="2" fill="#87a34d"/>
+      <circle cx="24" cy="33" r="2" fill="#87a34d"/>
+      <circle cx="32" cy="33" r="2" fill="#87a34d"/>
     </svg>
   `,
   
+  specials: `
+    <svg viewBox="0 0 48 48" class="sector-icon" fill="none">
+      <!-- Stella offerta speciale -->
+      <polygon points="24,6 29,18 42,18 32,26 36,39 24,31 12,39 16,26 6,18 19,18"
+        fill="#c8d8a0" stroke="#87a34d" stroke-width="2.5" stroke-linejoin="round"/>
+      <!-- Etichetta prezzo -->
+      <circle cx="34" cy="34" r="8" fill="#87a34d"/>
+      <text x="34" y="38" text-anchor="middle" font-size="9" font-weight="bold" fill="white">%</text>
+    </svg>
+  `,
+
   contacts: `
-    <svg viewBox="0 0 120 120" class="sector-icon">
-      <defs>
-        <linearGradient id="contactsGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style="stop-color:#548687;stop-opacity:1" />
-          <stop offset="100%" style="stop-color:#4a7a35;stop-opacity:1" />
-        </linearGradient>
-        <radialGradient id="phoneGrad" cx="50%" cy="40%">
-          <stop offset="0%" style="stop-color:#c5e99b;stop-opacity:1" />
-          <stop offset="100%" style="stop-color:#6da34d;stop-opacity:1" />
-        </radialGradient>
-      </defs>
-      
-      <!-- Ombra sotto -->
-      <ellipse cx="60" cy="98" rx="42" ry="5" fill="#4a7a35" opacity="0.2"/>
-      
-      <!-- Rubrica/Agenda -->
-      <rect x="25" y="25" width="70" height="70" rx="6" fill="white"/>
-      <rect x="25" y="25" width="70" height="70" rx="6" fill="none" stroke="#8d9c71" stroke-width="2.5"/>
-      
-      <!-- Indice laterale (tabs) -->
-      <rect x="90" y="30" width="8" height="8" rx="2" fill="#c5e99b"/>
-      <rect x="90" y="42" width="8" height="8" rx="2" fill="#6da34d" opacity="0.7"/>
-      <rect x="90" y="54" width="8" height="8" rx="2" fill="#c5e99b"/>
-      <rect x="90" y="66" width="8" height="8" rx="2" fill="#6da34d" opacity="0.7"/>
-      <rect x="90" y="78" width="8" height="8" rx="2" fill="#c5e99b"/>
-      
-      <!-- Persona stilizzata (contact icon) -->
-      <circle cx="60" cy="50" r="12" fill="url(#phoneGrad)"/>
-      <path d="M 45 80 Q 45 65 60 65 Q 75 65 75 80 L 75 85 L 45 85 Z" fill="url(#phoneGrad)"/>
-      
-      <!-- Dettagli persona -->
-      <circle cx="57" cy="48" r="2" fill="white" opacity="0.6"/>
-      
-      <!-- Icona telefono piccola -->
-      <circle cx="35" cy="40" r="8" fill="#548687" opacity="0.3"/>
-      <path d="M 32 37 Q 31 36 32 35 L 33 34 Q 34 33 35 34 L 36 35 Q 37 36 36 37 Q 35 40 33 42 Q 31 44 29 43 L 28 42 Q 27 41 28 40 Z" 
-            fill="white" opacity="0.8"/>
-      
-      <!-- Icona email piccola -->
-      <rect x="77" y="36" width="10" height="8" rx="1" fill="#548687" opacity="0.3"/>
-      <path d="M 77 36 L 82 40 L 87 36" stroke="white" stroke-width="1" fill="none" opacity="0.8"/>
-      
-      <!-- Righe stilizzate contatto -->
-      <line x1="35" y1="55" x2="52" y2="55" stroke="#8d9c71" stroke-width="2" opacity="0.3"/>
-      <line x1="68" y1="55" x2="85" y2="55" stroke="#8d9c71" stroke-width="2" opacity="0.3"/>
+    <svg viewBox="0 0 48 48" class="sector-icon" fill="none">
+      <!-- Persona contatto - stile Material 3 -->
+      <circle cx="24" cy="16" r="8" stroke="#87a34d" stroke-width="2.5" fill="none"/>
+      <path d="M8 42 C8 33 15 28 24 28 C33 28 40 33 40 42" stroke="#87a34d" stroke-width="2.5" stroke-linecap="round" fill="none"/>
     </svg>
   `,
   
@@ -360,45 +93,45 @@ export const sectorIcons = {
   wifi: `
     <svg viewBox="0 0 80 80" class="content-icon">
       <path d="M40 55 L40 60 M40 50 Q45 50 45 45 M40 50 Q35 50 35 45 M40 40 Q50 40 50 30 M40 40 Q30 40 30 30 M40 30 Q55 30 55 20 M40 30 Q25 30 25 20" 
-            stroke="#6da34d" stroke-width="3" fill="none" stroke-linecap="round"/>
-      <circle cx="40" cy="57" r="3" fill="#6da34d"/>
+            stroke="#87a34d" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <circle cx="40" cy="57" r="3" fill="#87a34d"/>
     </svg>
   `,
   
   pool: `
     <svg viewBox="0 0 80 80" class="content-icon">
       <path d="M10 50 Q15 45 20 50 T30 50 T40 50 T50 50 T60 50 T70 50" stroke="#548687" stroke-width="3" fill="none"/>
-      <path d="M10 58 Q15 53 20 58 T30 58 T40 58 T50 58 T60 58 T70 58" stroke="#c5e99b" stroke-width="3" fill="none"/>
-      <circle cx="55" cy="25" r="8" fill="#8d9c71"/>
+      <path d="M10 58 Q15 53 20 58 T30 58 T40 58 T50 58 T60 58 T70 58" stroke="#B8DECA" stroke-width="3" fill="none"/>
+      <circle cx="55" cy="25" r="8" fill="#88C39C"/>
       <path d="M40 38 L35 33 L38 25 L46 25 L48 30 L45 35" fill="#548687" opacity="0.7"/>
     </svg>
   `,
   
   restaurant: `
     <svg viewBox="0 0 80 80" class="content-icon">
-      <ellipse cx="40" cy="60" rx="30" ry="5" fill="#4a7a35" opacity="0.2"/>
-      <circle cx="40" cy="55" r="25" fill="none" stroke="#6da34d" stroke-width="3"/>
-      <line x1="25" y1="55" x2="25" y2="35" stroke="#8d9c71" stroke-width="2"/>
-      <line x1="55" y1="55" x2="55" y2="35" stroke="#4a7a35" stroke-width="2"/>
+      <ellipse cx="40" cy="60" rx="30" ry="5" fill="#1B6B3A" opacity="0.2"/>
+      <circle cx="40" cy="55" r="25" fill="none" stroke="#87a34d" stroke-width="3"/>
+      <line x1="25" y1="55" x2="25" y2="35" stroke="#88C39C" stroke-width="2"/>
+      <line x1="55" y1="55" x2="55" y2="35" stroke="#1B6B3A" stroke-width="2"/>
     </svg>
   `,
   
   monument: `
     <svg viewBox="0 0 80 80" class="content-icon">
-      <path d="M20 60 L30 20 L50 20 L60 60 Z" fill="#6da34d" opacity="0.3"/>
-      <rect x="25" y="55" width="30" height="10" fill="#4a7a35"/>
-      <rect x="35" y="30" width="10" height="20" fill="#c5e99b"/>
-      <path d="M40 15 L45 20 L35 20 Z" fill="#8d9c71"/>
+      <path d="M20 60 L30 20 L50 20 L60 60 Z" fill="#87a34d" opacity="0.3"/>
+      <rect x="25" y="55" width="30" height="10" fill="#1B6B3A"/>
+      <rect x="35" y="30" width="10" height="20" fill="#B8DECA"/>
+      <path d="M40 15 L45 20 L35 20 Z" fill="#88C39C"/>
     </svg>
   `,
   
   nature: `
     <svg viewBox="0 0 80 80" class="content-icon">
-      <circle cx="40" cy="25" r="12" fill="#8d9c71" opacity="0.7"/>
-      <path d="M10 65 L25 45 L40 65" fill="#c5e99b"/>
-      <path d="M30 65 L45 35 L60 65" fill="#6da34d"/>
-      <path d="M50 65 L65 50 L80 65" fill="#c5e99b" opacity="0.7"/>
-      <rect x="0" y="65" width="80" height="3" fill="#4a7a35" opacity="0.3"/>
+      <circle cx="40" cy="25" r="12" fill="#88C39C" opacity="0.7"/>
+      <path d="M10 65 L25 45 L40 65" fill="#B8DECA"/>
+      <path d="M30 65 L45 35 L60 65" fill="#87a34d"/>
+      <path d="M50 65 L65 50 L80 65" fill="#B8DECA" opacity="0.7"/>
+      <rect x="0" y="65" width="80" height="3" fill="#1B6B3A" opacity="0.3"/>
     </svg>
   `,
   
@@ -412,7 +145,7 @@ export const sectorIcons = {
       </defs>
       
       <!-- Ombra -->
-      <ellipse cx="60" cy="100" rx="45" ry="5" fill="#4a7a35" opacity="0.2"/>
+      <ellipse cx="60" cy="100" rx="45" ry="5" fill="#1B6B3A" opacity="0.2"/>
       
       <!-- Cerchio principale WhatsApp -->
       <circle cx="60" cy="60" r="40" fill="url(#whatsappGrad)"/>
@@ -436,8 +169,8 @@ export const sectorIcons = {
     <svg viewBox="0 0 24 24" class="icon-inline">
       <defs>
         <linearGradient id="emailGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style="stop-color:#8d9c71;stop-opacity:1" />
-          <stop offset="100%" style="stop-color:#6da34d;stop-opacity:1" />
+          <stop offset="0%" style="stop-color:#88C39C;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#87a34d;stop-opacity:1" />
         </linearGradient>
       </defs>
       
@@ -457,7 +190,7 @@ export const sectorIcons = {
       <defs>
         <linearGradient id="phoneGrad" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" style="stop-color:#548687;stop-opacity:1" />
-          <stop offset="100%" style="stop-color:#4a7a35;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#1B6B3A;stop-opacity:1" />
         </linearGradient>
       </defs>
       

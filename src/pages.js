@@ -1,7 +1,7 @@
 // Pagine dell'app MyLyfe
 
 import { i18n } from './i18n.js';
-import { createCard, createLoader, createError, createMainMenu, createContainer } from './components.js';
+import { createCard, createLoader, createError, createMainMenu, createContainer, createCategoryFilter } from './components.js';
 import { firebaseService } from './firebase-service.js';
 import { getSectorIcon } from './icons.js';
 import { uiConfigService } from './ui-config-service.js';
@@ -16,12 +16,17 @@ export async function renderHomePage() {
   
   // Ottieni tagline dalla configurazione
   const appTagline = config.branding?.appTagline?.[currentLang] || i18n.t('appTagline');
-  const welcomeSubtitle = config.homeTexts?.welcomeSubtitle?.[currentLang] || 'Benvenuti • Welcome • Bienvenue • Willkommen • Bienvenido';
+  const welcomeText = i18n.t('welcome') || 'Benvenuto!';
   
   container.innerHTML = `
-    <div class="welcome-section">
-      <h2>${appTagline}</h2>
-      <p>${welcomeSubtitle}</p>
+    <div class="hero-section">
+      <div class="hero-text">
+        <h1 class="hero-title">${welcomeText}</h1>
+        <p class="hero-subtitle">${appTagline}</p>
+      </div>
+      <div class="hero-illustration">
+        <img src="/piccolopng.png" alt="Lyfe Umbria Country House" class="hero-svg">
+      </div>
     </div>
   `;
   
@@ -54,7 +59,7 @@ export async function renderMyHomePage() {
           <p>${i18n.t('myHomeDesc')}</p>
         </div>
         <div class="info-message">
-          <p>ℹ️ I dati verranno caricati dal database Firebase.</p>
+          <p>I dati verranno caricati dal database Firebase.</p>
           <p>Per ora puoi vedere questa pagina di esempio.</p>
         </div>
       `;
@@ -151,7 +156,7 @@ export async function renderMyJourneyPage() {
           <p>${i18n.t('myJourneyDesc')}</p>
         </div>
         <div class="info-message">
-          <p>ℹ️ I luoghi da visitare verranno caricati dal database.</p>
+          <p>I luoghi da visitare verranno caricati dal database.</p>
         </div>
       `;
       
@@ -204,11 +209,14 @@ export async function renderMyJourneyPage() {
     
     const cardsContainer = document.createElement('div');
     cardsContainer.className = 'cards-container';
-    
     journeyData.forEach(item => {
-      cardsContainer.appendChild(createCard(item, 'journey'));
+      const card = createCard(item, 'journey');
+      card.dataset.category = i18n.tm(item.categoria);
+      cardsContainer.appendChild(card);
     });
-    
+
+    const filter = createCategoryFilter(journeyData, cardsContainer, 'journey');
+    if (filter) container.appendChild(filter);
     container.appendChild(cardsContainer);
     
   } catch (error) {
@@ -239,7 +247,7 @@ export async function renderMyTastePage() {
           <p>${i18n.t('myTasteDesc')}</p>
         </div>
         <div class="info-message">
-          <p>ℹ️ I ristoranti consigliati verranno caricati dal database.</p>
+          <p>I ristoranti consigliati verranno caricati dal database.</p>
         </div>
       `;
       
@@ -277,11 +285,14 @@ export async function renderMyTastePage() {
     
     const cardsContainer = document.createElement('div');
     cardsContainer.className = 'cards-container';
-    
     tasteData.forEach(item => {
-      cardsContainer.appendChild(createCard(item, 'taste'));
+      const card = createCard(item, 'taste');
+      card.dataset.category = i18n.tm(item.categoria);
+      cardsContainer.appendChild(card);
     });
-    
+
+    const filter = createCategoryFilter(tasteData, cardsContainer, 'taste');
+    if (filter) container.appendChild(filter);
     container.appendChild(cardsContainer);
     
   } catch (error) {
@@ -316,7 +327,7 @@ export async function renderMyEventsPage() {
             <p>${i18n.t('myEventsDesc')}</p>
           </div>
           <div class="info-message">
-            <p>ℹ️ Gli eventi verranno caricati dal database.</p>
+            <p>Gli eventi verranno caricati dal database.</p>
           </div>
         `;
         
@@ -363,7 +374,7 @@ export async function renderMyEventsPage() {
       const sortByDateBtn = document.createElement('button');
       sortByDateBtn.className = 'btn btn-secondary';
       sortByDateBtn.style.cssText = 'font-size: 0.9rem; padding: 0.5rem 1rem;';
-      sortByDateBtn.innerHTML = `📅 Ordina per Data Evento ${currentSort.field === 'dataEvento' ? (currentSort.direction === 'asc' ? '↑' : '↓') : ''}`;
+      sortByDateBtn.innerHTML = `Ordina per Data Evento ${currentSort.field === 'dataEvento' ? (currentSort.direction === 'asc' ? '↑' : '↓') : ''}`;
       sortByDateBtn.addEventListener('click', () => {
         if (currentSort.field === 'dataEvento') {
           // Toggle direzione
@@ -396,11 +407,14 @@ export async function renderMyEventsPage() {
       
       const cardsContainer = document.createElement('div');
       cardsContainer.className = 'cards-container';
-      
       eventsData.forEach(item => {
-        cardsContainer.appendChild(createCard(item, 'events'));
+        const card = createCard(item, 'events');
+        card.dataset.category = i18n.tm(item.categoria);
+        cardsContainer.appendChild(card);
       });
-      
+
+      const filter = createCategoryFilter(eventsData, cardsContainer, 'events');
+      if (filter) container.appendChild(filter);
       container.appendChild(cardsContainer);
       
     } catch (error) {
@@ -411,6 +425,263 @@ export async function renderMyEventsPage() {
   
   await loadEvents();
   
+  return container;
+}
+
+// Pagina My Specials
+export async function renderMySpecialsPage() {
+  const container = createContainer();
+
+  const loader = createLoader();
+  container.appendChild(loader);
+
+  let currentSort = { field: 'datainserimento', direction: 'desc' };
+
+  const loadSpecials = async () => {
+    try {
+      const specialsData = await firebaseService.getSpecialsData(currentSort.field, currentSort.direction);
+
+      // App mobile: mostra solo offerte non scadute (validoFino >= oggi)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const visibleSpecials = specialsData.filter(item => {
+        if (!item.validoFino) return true; // nessuna scadenza = sempre visibile
+        return new Date(item.validoFino) >= today;
+      });
+
+      loader.remove();
+
+      if (visibleSpecials.length === 0) {
+        container.innerHTML = `
+          <div class="page-header">
+            <div class="page-icon-wrapper">${getSectorIcon('specials')}</div>
+            <h2>${i18n.t('mySpecials')}</h2>
+            <p>${i18n.t('mySpecialsDesc')}</p>
+          </div>
+          <div class="info-message">
+            <p>Le offerte speciali verranno caricate dal database.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = '';
+
+      const header = document.createElement('div');
+      header.className = 'page-header';
+      header.innerHTML = `
+        <div class="page-icon-wrapper">${getSectorIcon('specials')}</div>
+        <h2>${i18n.t('mySpecials')}</h2>
+        <p>${i18n.t('mySpecialsDesc')}</p>
+      `;
+      container.appendChild(header);
+
+      const sortControls = document.createElement('div');
+      sortControls.className = 'sort-controls';
+      sortControls.style.cssText = 'display: flex; gap: 0.5rem; margin: 1rem 0; flex-wrap: wrap; justify-content: center;';
+
+      const sortByValidBtn = document.createElement('button');
+      sortByValidBtn.className = 'btn btn-secondary';
+      sortByValidBtn.style.cssText = 'font-size: 0.9rem; padding: 0.5rem 1rem;';
+      sortByValidBtn.innerHTML = `Ordina per Scadenza ${currentSort.field === 'validoFino' ? (currentSort.direction === 'asc' ? '\u2191' : '\u2193') : ''}`;
+      sortByValidBtn.addEventListener('click', () => {
+        currentSort = currentSort.field === 'validoFino'
+          ? { field: 'validoFino', direction: currentSort.direction === 'asc' ? 'desc' : 'asc' }
+          : { field: 'validoFino', direction: 'asc' };
+        container.innerHTML = '';
+        container.appendChild(loader);
+        loadSpecials();
+      });
+
+      const sortByInsertBtn = document.createElement('button');
+      sortByInsertBtn.className = 'btn btn-secondary';
+      sortByInsertBtn.style.cssText = 'font-size: 0.9rem; padding: 0.5rem 1rem;';
+      sortByInsertBtn.innerHTML = `\uD83C\uDD95 Pi\u00f9 Recenti`;
+      sortByInsertBtn.addEventListener('click', () => {
+        currentSort = { field: 'datainserimento', direction: 'desc' };
+        container.innerHTML = '';
+        container.appendChild(loader);
+        loadSpecials();
+      });
+
+      sortControls.appendChild(sortByValidBtn);
+      sortControls.appendChild(sortByInsertBtn);
+      container.appendChild(sortControls);
+
+      const cardsContainer = document.createElement('div');
+      cardsContainer.className = 'cards-container';
+      visibleSpecials.forEach(item => {
+        const card = createCard(item, 'specials');
+        card.dataset.category = i18n.tm(item.categoria);
+        cardsContainer.appendChild(card);
+      });
+
+      const filter = createCategoryFilter(visibleSpecials, cardsContainer, 'specials');
+      if (filter) container.appendChild(filter);
+      container.appendChild(cardsContainer);
+
+    } catch (error) {
+      loader.remove();
+      container.appendChild(createError(error.message));
+    }
+  };
+
+  await loadSpecials();
+  return container;
+}
+
+// Pagina dettaglio My Specials
+export async function renderSpecialsDetailPage(params) {
+  const container = createContainer();
+  const itemId = params.id;
+
+  container.appendChild(createLoader());
+
+  try {
+    const specialsData = await firebaseService.getSpecialsData();
+    const item = specialsData.find(d => d.id === itemId);
+
+    if (!item) {
+      container.innerHTML = '<div class="error-message">Offerta non trovata</div>';
+      return container;
+    }
+
+    const validUntil = item.validoFino
+      ? new Date(item.validoFino).toLocaleDateString(i18n.getCurrentLanguage(), {
+          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        })
+      : '';
+
+    container.innerHTML = `
+      ${item.imgUrl ? `<img src="${item.imgUrl}" alt="${i18n.tm(item.titolo)}" class="detail-page-image">` : ''}
+      <div class="detail-page-content">
+        <div class="detail-page-header">
+          <h2 class="detail-page-title">${i18n.tm(item.titolo)}</h2>
+          ${item.categoria ? `<span class="detail-category">${i18n.tm(item.categoria)}</span>` : ''}
+        </div>
+        <p class="detail-page-description">${i18n.tm(item.descrizione)}</p>
+        <div class="detail-info-row">
+          ${item.prezzo ? `<span class="detail-info-item"><span style="text-decoration:${item.prezzoScontato ? 'line-through' : 'none'};color:${item.prezzoScontato ? '#aaa' : 'inherit'}">Prezzo: ${parseFloat(item.prezzo).toFixed(2)} €</span></span>` : ''}
+          ${item.prezzoScontato ? `<span class="detail-info-item" style="color:#87a34d;font-weight:700">Prezzo scontato: ${parseFloat(item.prezzoScontato).toFixed(2)} €</span>` : ''}
+          ${item.sconto ? `<span class="detail-info-item" style="color:#87a34d;font-weight:700">${i18n.t('specialDiscount')}: ${item.sconto}</span>` : (item.scontoPerc ? `<span class="detail-info-item" style="color:#87a34d;font-weight:700">Sconto: ${item.scontoPerc}%</span>` : '')}
+          ${validUntil ? `<span class="detail-info-item">${i18n.t('specialValidUntil')}: ${validUntil}</span>` : ''}
+          ${item.luogo ? `<span class="detail-info-item">${item.luogo}</span>` : ''}
+        </div>
+        ${item.notes ? `
+          <div class="detail-section">
+            <h3>Dettagli</h3>
+            <div class="detail-notes">${i18n.tm(item.notes)}</div>
+          </div>
+        ` : ''}
+        <div class="detail-page-actions">
+          ${item.mapsUrl ? `
+            <a href="${item.mapsUrl}" target="_blank" class="btn btn-primary">
+              ${i18n.t('openMap')}
+            </a>
+          ` : ''}
+          ${item.sitoWeb ? `
+            <a href="${item.sitoWeb}" target="_blank" class="btn btn-secondary">
+              ${i18n.t('website')}
+            </a>
+          ` : ''}
+        </div>
+        ${item.prenotazioneAttiva ? `
+          <div class="booking-btn-wrap">
+            <div class="booking-actions-row">
+              <button class="btn-booking" id="booking-open-btn">
+                ✉️ Invia email di richiesta
+              </button>
+              <button class="btn-booking btn-booking-wa" id="booking-wa-btn">
+                <svg viewBox="0 0 24 24" width="18" height="18" style="flex-shrink:0"><path fill="currentColor" d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.23-8.24 8.23-1.48 0-2.93-.39-4.19-1.15l-.3-.17-3.12.82.83-3.04-.2-.32a8.188 8.188 0 0 1-1.26-4.38c.01-4.54 3.7-8.24 8.25-8.24M8.53 7.33c-.16 0-.43.06-.66.31-.22.25-.87.85-.87 2.07 0 1.22.89 2.39 1 2.56.14.17 1.76 2.67 4.25 3.73.59.27 1.05.42 1.41.53.59.19 1.13.16 1.56.1.48-.07 1.46-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.07-.1-.23-.16-.48-.27-.25-.14-1.47-.74-1.69-.82-.23-.08-.37-.12-.56.12-.16.25-.64.81-.78.97-.15.17-.29.19-.53.07-.26-.13-1.06-.39-2-1.23-.74-.66-1.23-1.47-1.38-1.72-.12-.24-.01-.39.11-.5.11-.11.27-.29.37-.44.13-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.11-.56-1.35-.77-1.84-.2-.48-.4-.42-.56-.43-.14 0-.3-.01-.47-.01z"/></svg>
+                Invia richiesta su WhatsApp
+              </button>
+            </div>
+            <div class="booking-form-panel" id="booking-panel">
+              <p class="booking-form-title">Compila il modulo per inviare la richiesta via email</p>
+              <div class="form-group">
+                <label>Nominativo <span style="color:#c62828">*</span></label>
+                <input type="text" id="booking-nome" placeholder="Nome e Cognome">
+              </div>
+              <div class="form-group">
+                <label>Email <span style="color:#c62828">*</span></label>
+                <input type="email" id="booking-email" placeholder="La tua email">
+              </div>
+              <div class="form-group">
+                <label>Telefono <span class="booking-field-hint">(facoltativo)</span></label>
+                <input type="tel" id="booking-tel" placeholder="+39 ...">
+              </div>
+              <div class="booking-submit-row">
+                <button class="btn-booking-submit" id="booking-submit-btn">Invia email</button>
+                <button class="btn-booking-cancel" id="booking-cancel-btn">Annulla</button>
+              </div>
+            </div>
+          </div>
+        ` : ''}
+      </div>
+    `;
+
+    if (item.prenotazioneAttiva) {
+      const openBtn = container.querySelector('#booking-open-btn');
+      const waBtn = container.querySelector('#booking-wa-btn');
+      const panel = container.querySelector('#booking-panel');
+      const cancelBtn = container.querySelector('#booking-cancel-btn');
+      const submitBtn = container.querySelector('#booking-submit-btn');
+      const nomeInput = container.querySelector('#booking-nome');
+      const emailInput = container.querySelector('#booking-email');
+      const telInput = container.querySelector('#booking-tel');
+
+      openBtn.addEventListener('click', () => {
+        panel.classList.toggle('open');
+        if (panel.classList.contains('open')) nomeInput.focus();
+      });
+
+      cancelBtn.addEventListener('click', () => {
+        panel.classList.remove('open');
+        nomeInput.value = '';
+        emailInput.value = '';
+        telInput.value = '';
+      });
+
+      [nomeInput, emailInput].forEach(inp => {
+        inp.addEventListener('input', () => { inp.style.borderColor = ''; });
+      });
+
+      submitBtn.addEventListener('click', () => {
+        const nome = nomeInput.value.trim();
+        const email = emailInput.value.trim();
+        const tel = telInput.value.trim();
+
+        if (!nome) { nomeInput.style.borderColor = '#c62828'; nomeInput.focus(); return; }
+        if (!email || !/^\S+@\S+\.\S+$/.test(email)) { emailInput.style.borderColor = '#c62828'; emailInput.focus(); return; }
+
+        const cfg = uiConfigService.getConfig();
+        const toEmail = cfg.contacts && cfg.contacts.email ? cfg.contacts.email : 'info@mylyfeumbria.it';
+        const itemTitle = i18n.tm(item.titolo);
+        const subject = encodeURIComponent('Richiesta di prenotazione: ' + itemTitle);
+        const body = encodeURIComponent(
+          'Richiesta di prenotazione per: ' + itemTitle + '\n\n' +
+          'Nominativo: ' + nome + '\n' +
+          'Email: ' + email + '\n' +
+          (tel ? 'Telefono: ' + tel + '\n' : '') +
+          '\nInviata dall\'app MyLyfe Umbria'
+        );
+
+        window.open('mailto:' + toEmail + '?subject=' + subject + '&body=' + body, '_blank');
+        panel.innerHTML = '<p class="booking-success-msg">✅ Il tuo client email si è aperto con la richiesta precompilata. Premi “Invia” per confermare.</p>';
+      });
+      waBtn.addEventListener('click', () => {
+        const cfg = uiConfigService.getConfig();
+        const rawPhone = (cfg.contacts && cfg.contacts.phone ? cfg.contacts.phone : '+393917557924').replace(/[^0-9]/g, '');
+        const itemTitle = i18n.tm(item.titolo);
+        const waText = encodeURIComponent('Salve, vorrei richiedere informazioni per la prenotazione di: ' + itemTitle + '\nInviato dall\'app MyLyfe Umbria');
+        window.location.href = 'https://wa.me/' + rawPhone + '?text=' + waText;
+      });    }
+
+  } catch (error) {
+    container.innerHTML = '';
+    container.appendChild(createError());
+  }
+
   return container;
 }
 
@@ -482,24 +753,24 @@ export async function renderHomeDetailPage(params) {
         <p class="detail-page-description">${i18n.tm(item.descrizione)}</p>
         ${item.notes ? `
           <div class="detail-section">
-            <h3>📋 Dettagli e Informazioni</h3>
+            <h3>Dettagli e Informazioni</h3>
             <div class="detail-notes">${i18n.tm(item.notes)}</div>
           </div>
         ` : ''}
         <div class="detail-page-actions">
           ${item.mapsUrl ? `
             <a href="${item.mapsUrl}" target="_blank" class="btn btn-primary">
-              🗺️ ${i18n.t('openMap')}
+              ${i18n.t('openMap')}
             </a>
           ` : ''}
           ${item.pdfUrl ? `
             <a href="${item.pdfUrl}" target="_blank" class="btn btn-secondary" download>
-              📄 Scarica Guida PDF
+              Scarica Guida PDF
             </a>
           ` : ''}
           ${item.downloadUrl ? `
             <a href="${item.downloadUrl}" class="btn btn-secondary" download>
-              📄 ${i18n.tm(item.downloadLabel) || i18n.t('download')}
+              ${i18n.tm(item.downloadLabel) || i18n.t('download')}
             </a>
           ` : ''}
         </div>
@@ -540,25 +811,25 @@ export async function renderJourneyDetailPage(params) {
         <p class="detail-page-description">${i18n.tm(item.descrizione)}</p>
         ${item.distanza || item.durata ? `
           <div class="detail-info-row">
-            ${item.distanza ? `<span class="detail-info-item">📍 ${item.distanza}</span>` : ''}
-            ${item.durata ? `<span class="detail-info-item">⏱️ ${item.durata}</span>` : ''}
+            ${item.distanza ? `<span class="detail-info-item">${item.distanza}</span>` : ''}
+            ${item.durata ? `<span class="detail-info-item">${item.durata}</span>` : ''}
           </div>
         ` : ''}
         ${item.notes ? `
           <div class="detail-section">
-            <h3>📋 Informazioni Turistiche</h3>
+            <h3>Informazioni Turistiche</h3>
             <div class="detail-notes">${i18n.tm(item.notes)}</div>
           </div>
         ` : ''}
         <div class="detail-page-actions">
           ${item.mapsUrl ? `
             <a href="${item.mapsUrl}" target="_blank" class="btn btn-primary">
-              🗺️ ${i18n.t('openMap')}
+              ${i18n.t('openMap')}
             </a>
           ` : ''}
           ${item.pdfUrl ? `
             <a href="${item.pdfUrl}" target="_blank" class="btn btn-secondary" download>
-              📄 Scarica Guida PDF
+              Scarica Guida PDF
             </a>
           ` : ''}
         </div>
@@ -596,29 +867,29 @@ export async function renderTasteDetailPage(params) {
           <h2 class="detail-page-title">${i18n.tm(item.titolo)}</h2>
           ${item.categoria ? `<span class="detail-category">${i18n.tm(item.categoria)}</span>` : ''}
         </div>
-        ${item.tipoCucina ? `<p class="detail-cuisine">🍴 ${i18n.tm(item.tipoCucina)}</p>` : ''}
+        ${item.tipoCucina ? `<p class="detail-cuisine">${i18n.tm(item.tipoCucina)}</p>` : ''}
         <p class="detail-page-description">${i18n.tm(item.descrizione)}</p>
-        ${item.prezzoMedio ? `<p class="detail-price">💰 ${i18n.tm(item.prezzoMedio)}</p>` : ''}
+        ${item.prezzoMedio ? `<p class="detail-price">${i18n.tm(item.prezzoMedio)}</p>` : ''}
         ${item.notes ? `
           <div class="detail-section">
-            <h3>📋 Informazioni e Suggerimenti</h3>
+            <h3>Informazioni e Suggerimenti</h3>
             <div class="detail-notes">${i18n.tm(item.notes)}</div>
           </div>
         ` : ''}
         <div class="detail-page-actions">
           ${item.telefono ? `
             <a href="tel:${item.telefono}" class="btn btn-secondary">
-              📞 ${i18n.t('call')}
+              ${i18n.t('call')}
             </a>
           ` : ''}
           ${item.mapsUrl ? `
             <a href="${item.mapsUrl}" target="_blank" class="btn btn-primary">
-              🗺️ ${i18n.t('openMap')}
+              ${i18n.t('openMap')}
             </a>
           ` : ''}
           ${item.pdfUrl ? `
             <a href="${item.pdfUrl}" target="_blank" class="btn btn-secondary" download>
-              📄 Scarica Guida PDF
+              Scarica Guida PDF
             </a>
           ` : ''}
         </div>
@@ -667,30 +938,30 @@ export async function renderEventsDetailPage(params) {
         </div>
         <p class="detail-page-description">${i18n.tm(item.descrizione)}</p>
         <div class="detail-info-row">
-          ${eventDate ? `<span class="detail-info-item">📅 ${eventDate}</span>` : ''}
-          ${eventTime ? `<span class="detail-info-item">🕐 ${eventTime}</span>` : ''}
-          ${item.luogoEvento ? `<span class="detail-info-item">📍 ${item.luogoEvento}</span>` : ''}
+          ${eventDate ? `<span class="detail-info-item">${eventDate}</span>` : ''}
+          ${eventTime ? `<span class="detail-info-item">${eventTime}</span>` : ''}
+          ${item.luogoEvento ? `<span class="detail-info-item">${item.luogoEvento}</span>` : ''}
         </div>
         ${item.notes ? `
           <div class="detail-section">
-            <h3>📋 Informazioni Aggiuntive</h3>
+            <h3>Informazioni Aggiuntive</h3>
             <div class="detail-notes">${i18n.tm(item.notes)}</div>
           </div>
         ` : ''}
         <div class="detail-page-actions">
           ${item.mapsUrl ? `
             <a href="${item.mapsUrl}" target="_blank" class="btn btn-primary">
-              🗺️ ${i18n.t('openMap')}
+              ${i18n.t('openMap')}
             </a>
           ` : ''}
           ${item.sitoWeb ? `
             <a href="${item.sitoWeb}" target="_blank" class="btn btn-secondary">
-              🌐 ${i18n.t('website')}
+              ${i18n.t('website')}
             </a>
           ` : ''}
           ${item.pdfUrl ? `
             <a href="${item.pdfUrl}" target="_blank" class="btn btn-secondary" download>
-              📄 Scarica Programma
+              Scarica Programma
             </a>
           ` : ''}
         </div>
@@ -707,11 +978,11 @@ export async function renderEventsDetailPage(params) {
 // Funzione helper per ottenere icona
 function getIconFromComponents(iconName) {
   const icons = {
-    wifi: '📶',
-    pool: '🏊',
-    key: '🔑',
-    info: 'ℹ️',
-    home: '🏠'
+    wifi: '&#x1F4F6;',
+    pool: '&#x1F3CA;',
+    key: '&#x1F511;',
+    info: '&#x2139;&#xFE0F;',
+    home: '&#x1F3E0;'
   };
   return icons[iconName] || icons.info;
 }

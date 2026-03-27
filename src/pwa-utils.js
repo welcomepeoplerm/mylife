@@ -93,7 +93,7 @@ function showIOSInstructions() {
     bottom: 0;
     left: 0;
     right: 0;
-    background: linear-gradient(135deg, #6da34d, #c5e99b);
+    background: linear-gradient(135deg, #87a34d, #B8DECA);
     color: white;
     padding: 1rem;
     z-index: 1000;
@@ -106,7 +106,7 @@ function showIOSInstructions() {
   banner.innerHTML = `
     <div style="max-width: 600px; margin: 0 auto;">
       <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
-        <strong style="font-size: 1.1rem;">📱 Installa MyLyfe</strong>
+        <strong style="font-size: 1.1rem;">Installa MyLyfe</strong>
         <button id="ios-dismiss-btn" style="
           background: transparent;
           color: white;
@@ -115,7 +115,7 @@ function showIOSInstructions() {
           cursor: pointer;
           padding: 0;
           line-height: 1;
-        ">✕</button>
+        ">&times;</button>
       </div>
       <p style="margin: 0 0 1rem 0; font-size: 0.9rem; opacity: 0.95;">
         Per installare l'app, segui questi passaggi:
@@ -163,121 +163,183 @@ function showIOSInstructions() {
 /**
  * Gestisce l'evento beforeinstallprompt per installazione PWA
  */
-let deferredPrompt;
+let deferredPrompt = window.__deferredPrompt || null;
 
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
-  console.log('PWA può essere installata');
-  // Mostra bottone di installazione personalizzato
-  showInstallButton();
+  window.__deferredPrompt = e;
+  console.log('PWA installabile: beforeinstallprompt catturato');
+  // Mostra dialog solo quando il prompt nativo è disponibile
+  if (isInstalled()) return;
+  const lastDismissed = localStorage.getItem('install-dialog-dismissed');
+  const threeDaysAgo = Date.now() - (3 * 24 * 60 * 60 * 1000);
+  if (lastDismissed && parseInt(lastDismissed) > threeDaysAgo) return;
+  const doShow = () => setTimeout(showInstallDialog, 1200);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', doShow);
+  } else {
+    doShow();
+  }
 });
+
+// Se l'evento è già stato catturato prima del modulo, mostra il dialog
+if (deferredPrompt && !isInstalled()) {
+  const lastDismissed = localStorage.getItem('install-dialog-dismissed');
+  const threeDaysAgo = Date.now() - (3 * 24 * 60 * 60 * 1000);
+  if (!lastDismissed || parseInt(lastDismissed) < threeDaysAgo) {
+    const doShow = () => setTimeout(showInstallDialog, 1200);
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', doShow);
+    } else {
+      doShow();
+    }
+  }
+}
 
 // Mostra istruzioni iOS se applicabile
 if (isIOS() && !isInstalled()) {
-  // Non mostrare se già dismissato nelle ultime 24 ore
   const lastDismissed = localStorage.getItem('ios-install-dismissed');
   const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
-  
   if (!lastDismissed || parseInt(lastDismissed) < oneDayAgo) {
-    // Mostra dopo un breve delay per non interferire con il caricamento
-    setTimeout(showIOSInstructions, 2000);
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => setTimeout(showIOSInstructions, 2000));
+    } else {
+      setTimeout(showIOSInstructions, 2000);
+    }
   }
 }
 
-// Mostra banner Android immediatamente alla prima visita
-if (isAndroid() && !isInstalled()) {
-  const androidBannerShown = sessionStorage.getItem('android-banner-shown');
-  
-  if (!androidBannerShown) {
-    // Mostra banner dopo un breve delay
-    setTimeout(() => {
-      // Se non c'è ancora il prompt nativo, mostra il banner manualmente
-      if (!deferredPrompt) {
-        showInstallButton();
-      }
-      sessionStorage.setItem('android-banner-shown', 'true');
-    }, 1500);
-  }
-}
+function showInstallDialog() {
+  if (document.getElementById('install-dialog') || isInstalled()) return;
 
-function showInstallButton() {
-  // Evita di mostrare più banner contemporaneamente
-  if (document.getElementById('install-banner')) {
-    return;
-  }
-  
-  // Crea banner di installazione
-  const banner = document.createElement('div');
-  banner.id = 'install-banner';
-  banner.style.cssText = `
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: linear-gradient(135deg, #6da34d, #c5e99b);
-    color: white;
-    padding: 1rem;
+  const overlay = document.createElement('div');
+  overlay.id = 'install-dialog';
+  overlay.style.cssText = `
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 99999;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    z-index: 1000;
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
-    animation: slideUp 0.3s ease-out;
+    justify-content: center;
+    padding: 1.5rem;
   `;
-  
-  banner.innerHTML = `
-    <div style="flex: 1;">
-      <strong>📱 Installa MyLyfe</strong>
-      <p style="margin: 0.25rem 0 0 0; font-size: 0.9rem; opacity: 0.95;">Accedi velocemente dall'icona sul tuo dispositivo</p>
-    </div>
-    <div style="display: flex; gap: 0.5rem;">
-      <button id="install-btn" style="
-        background: white;
-        color: #6da34d;
-        border: none;
-        padding: 0.75rem 1.5rem;
-        border-radius: 8px;
-        font-weight: 600;
-        cursor: pointer;
-      ">Installa</button>
-      <button id="dismiss-btn" style="
-        background: rgba(255,255,255,0.2);
+
+  overlay.innerHTML = `
+    <div style="
+      background: white;
+      border-radius: 20px;
+      padding: 2rem 1.5rem;
+      max-width: 340px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    ">
+      <img src="/piccolopng.png" alt="Logo" style="width:80px;height:80px;object-fit:contain;margin-bottom:1rem;" onerror="this.style.display='none'">
+      <h2 style="margin:0 0 0.5rem;font-size:1.2rem;color:#222;">Installa MyLyfe</h2>
+      <p style="margin:0 0 1.5rem;font-size:0.9rem;color:#555;line-height:1.5;">
+        Aggiungi l'app alla schermata Home per un accesso rapido, anche senza connessione.
+      </p>
+      <button id="pwa-install-ok" style="
+        width: 100%;
+        background: #87a34d;
         color: white;
-        border: 1px solid white;
-        padding: 0.75rem 1rem;
-        border-radius: 8px;
+        border: none;
+        padding: 0.9rem;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 700;
         cursor: pointer;
-      ">✕</button>
+        margin-bottom: 0.75rem;
+      ">Installa ora</button>
+      <button id="pwa-install-dismiss" style="
+        width: 100%;
+        background: none;
+        color: #888;
+        border: none;
+        padding: 0.6rem;
+        font-size: 0.9rem;
+        cursor: pointer;
+      ">Non ora</button>
     </div>
   `;
-  
-  // Aggiungi animazione CSS
-  const style = document.createElement('style');
-  style.textContent = `
-    @keyframes slideUp {
-      from { transform: translateY(100%); }
-      to { transform: translateY(0); }
+
+  if (!document.getElementById('pwa-slide-style')) {
+    const s = document.createElement('style');
+    s.id = 'pwa-slide-style';
+    s.textContent = '@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}';
+    document.head.appendChild(s);
+  }
+
+  document.body.appendChild(overlay);
+
+  document.getElementById('pwa-install-ok').addEventListener('click', async () => {
+    overlay.remove();
+    if (deferredPrompt) {
+      try {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log('Installazione PWA:', outcome);
+        if (outcome === 'accepted') localStorage.removeItem('install-dialog-dismissed');
+        deferredPrompt = null;
+      } catch (err) {
+        console.log('Errore prompt, mostro istruzioni manuali:', err);
+        deferredPrompt = null;
+        showAndroidManualInstructions();
+      }
+    } else {
+      showAndroidManualInstructions();
     }
+  });
+
+  document.getElementById('pwa-install-dismiss').addEventListener('click', () => {
+    overlay.remove();
+    localStorage.setItem('install-dialog-dismissed', Date.now());
+  });
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) {
+      overlay.remove();
+      localStorage.setItem('install-dialog-dismissed', Date.now());
+    }
+  });
+}
+
+function showInstallBanner() {
+  showInstallDialog();
+}
+
+function showAndroidManualInstructions() {
+  if (document.getElementById('install-manual-modal')) return;
+
+  const modal = document.createElement('div');
+  modal.id = 'install-manual-modal';
+  modal.style.cssText = `
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 10000;
+    display: flex; align-items: flex-end;
   `;
-  document.head.appendChild(style);
-  
-  document.body.appendChild(banner);
-  
-  // Gestisci click installazione
-  document.getElementById('install-btn').addEventListener('click', async () => {
-    const installed = await installPWA();
-    if (installed) {
-      banner.remove();
-    }
-  });
-  
-  // Gestisci chiusura banner
-  document.getElementById('dismiss-btn').addEventListener('click', () => {
-    banner.remove();
-  });
-  
-  console.log('Banner installazione PWA mostrato');
+  modal.innerHTML = `
+    <div style="background:white;width:100%;border-radius:20px 20px 0 0;padding:1.5rem;max-height:80vh;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+        <strong style="font-size:1.1rem;color:#333;">Installa MyLyfe su Android</strong>
+        <button id="modal-close-btn" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#666;">&times;</button>
+      </div>
+      <p style="color:#555;font-size:0.95rem;margin-bottom:1rem;">Segui questi passi in Chrome:</p>
+      <ol style="color:#333;font-size:0.95rem;line-height:2;padding-left:1.2rem;">
+        <li>Tocca i <strong>tre punti</strong> in alto a destra <span style="background:#eee;border-radius:4px;padding:2px 8px;font-size:0.85rem;">&#8942;</span></li>
+        <li>Tocca <strong>"Aggiungi a schermata Home"</strong></li>
+        <li>Conferma con <strong>"Aggiungi"</strong></li>
+      </ol>
+      <p style="color:#888;font-size:0.8rem;margin-top:1rem;">In alternativa: Menu &#8942; &rarr; <strong>Installa app</strong></p>
+      <button id="modal-ok-btn" style="width:100%;margin-top:1rem;background:#87a34d;color:white;border:none;padding:0.9rem;border-radius:10px;font-weight:700;font-size:1rem;cursor:pointer;">Capito</button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  document.getElementById('modal-close-btn').addEventListener('click', () => modal.remove());
+  document.getElementById('modal-ok-btn').addEventListener('click', () => modal.remove());
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
 }
 
 /**
@@ -285,20 +347,52 @@ function showInstallButton() {
  */
 export async function installPWA() {
   if (!deferredPrompt) {
-    console.log('Prompt di installazione non disponibile');
+    if (isIOS()) {
+      showIOSInstructions();
+    } else {
+      showAndroidManualInstructions();
+    }
     return false;
   }
-  
-  deferredPrompt.prompt();
-  const { outcome } = await deferredPrompt.userChoice;
-  console.log(`Installazione PWA: ${outcome}`);
-  deferredPrompt = null;
-  
-  return outcome === 'accepted';
+
+  try {
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log(`Installazione PWA: ${outcome}`);
+    deferredPrompt = null;
+    return outcome === 'accepted';
+  } catch (err) {
+    console.log('Errore prompt installazione:', err);
+    deferredPrompt = null;
+    showAndroidManualInstructions();
+    return false;
+  }
 }
 
 // Evento dopo l'installazione
 window.addEventListener('appinstalled', () => {
-  console.log('✅ PWA installata con successo!');
+  console.log('PWA installata con successo!');
   deferredPrompt = null;
+  const installHeaderBtn = document.getElementById('install-header-btn');
+  if (installHeaderBtn) installHeaderBtn.style.display = 'none';
+  document.getElementById('install-dialog')?.remove();
 });
+
+/**
+ * Mostra UI di installazione su richiesta (pulsante header)
+ */
+export function showInstallUI() {
+  if (isIOS()) {
+    showIOSInstructions();
+  } else if (deferredPrompt) {
+    // Prompt nativo disponibile: mostra dialogo custom → poi prompt Chrome nativo
+    showInstallDialog();
+  } else {
+    // Nessun prompt nativo: va direttamente alle istruzioni manuali
+    showAndroidManualInstructions();
+  }
+}
+
+export function canShowInstall() {
+  return !isInstalled() && (!!deferredPrompt || isIOS());
+}

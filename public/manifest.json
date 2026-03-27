@@ -1,4 +1,4 @@
-{
+﻿{
   "name": "MyLyfe Umbria",
   "short_name": "MyLyfe",
   "description": "La tua guida personale in Umbria",
@@ -7,7 +7,7 @@
   "start_url": "/",
   "display": "standalone",
   "background_color": "#F5F5F5",
-  "theme_color": "#6da34d",
+  "theme_color": "#87a34d",
   "orientation": "portrait-primary",
   "prefer_related_applications": false,
   "categories": ["travel", "lifestyle"],
@@ -87,6 +87,20 @@
       "type": "image/png",
       "form_factor": "wide",
       "label": "MyLyfe Umbria - Esplora l'Umbria"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Eventi",
+      "short_name": "Eventi",
+      "url": "/#/events",
+      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Mappa",
+      "short_name": "Mappa",
+      "url": "/#/map",
+      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
     }
   ]
 }

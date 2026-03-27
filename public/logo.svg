@@ -1,0 +1,75 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="circleClip">
+      <circle cx="100" cy="100" r="95"/>
+    </clipPath>
+    <linearGradient id="skyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#eef5ea;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#e2eddb;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#d5e5cd;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <!-- Soft outer shadow -->
+  <circle cx="100" cy="100" r="98" fill="#ddd" opacity="0.15"/>
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="95" fill="url(#skyGrad)"/>
+  <g clip-path="url(#circleClip)">
+    <!-- Far mountains - very light -->
+    <ellipse cx="60" cy="105" rx="80" ry="28" fill="#c8d9b8" opacity="0.6"/>
+    <ellipse cx="150" cy="108" rx="70" ry="25" fill="#c2d4b2" opacity="0.5"/>
+    
+    <!-- Cloud -->
+    <ellipse cx="115" cy="48" rx="18" ry="7" fill="white" opacity="0.75"/>
+    <ellipse cx="108" cy="45" rx="12" ry="6" fill="white" opacity="0.75"/>
+    <ellipse cx="123" cy="46" rx="10" ry="5.5" fill="white" opacity="0.7"/>
+
+    <!-- Mid hills - medium green -->
+    <ellipse cx="45" cy="130" rx="95" ry="42" fill="#b5cea0"/>
+    <ellipse cx="160" cy="135" rx="80" ry="38" fill="#adc896" opacity="0.8"/>
+    
+    <!-- Front-mid hill -->
+    <ellipse cx="100" cy="148" rx="110" ry="45" fill="#8fb87a"/>
+    <ellipse cx="40" cy="145" rx="70" ry="35" fill="#9dc288" opacity="0.85"/>
+
+    <!-- Foreground hill - darkest -->
+    <ellipse cx="100" cy="175" rx="130" ry="55" fill="#6a9e50"/>
+    <ellipse cx="60" cy="168" rx="90" ry="42" fill="#73a65a" opacity="0.9"/>
+    
+    <!-- Round tree/bush left of house -->
+    <circle cx="58" cy="132" r="12" fill="#5a8e42" opacity="0.8"/>
+    <circle cx="52" cy="128" r="9" fill="#6b9d52" opacity="0.7"/>
+    
+    <!-- House body -->
+    <rect x="68" y="132" width="42" height="26" rx="1" fill="#f0edd8"/>
+    <rect x="68" y="132" width="42" height="26" rx="1" fill="none" stroke="#d5d0b8" stroke-width="0.5"/>
+    
+    <!-- Roof -->
+    <path d="M 64 132 L 89 112 L 114 132 Z" fill="#6a8e50"/>
+    <path d="M 64 132 L 89 112 L 114 132 Z" fill="none" stroke="#5a7e42" stroke-width="0.5"/>
+    
+    <!-- Door -->
+    <rect x="83" y="142" width="12" height="16" rx="6" fill="#8aad6e"/>
+    
+    <!-- Windows -->
+    <rect x="72" y="138" width="8" height="7" rx="1" fill="#d4dfc8" opacity="0.8"/>
+    <line x1="76" y1="138" x2="76" y2="145" stroke="#f0edd8" stroke-width="0.7" opacity="0.6"/>
+    <line x1="72" y1="141.5" x2="80" y2="141.5" stroke="#f0edd8" stroke-width="0.7" opacity="0.6"/>
+    
+    <rect x="98" y="138" width="8" height="7" rx="1" fill="#d4dfc8" opacity="0.8"/>
+    <line x1="102" y1="138" x2="102" y2="145" stroke="#f0edd8" stroke-width="0.7" opacity="0.6"/>
+    <line x1="98" y1="141.5" x2="106" y2="141.5" stroke="#f0edd8" stroke-width="0.7" opacity="0.6"/>
+
+    <!-- Cypress tree 1 (taller, right) -->
+    <ellipse cx="134" cy="112" rx="7" ry="30" fill="#4a7e36"/>
+    <ellipse cx="134" cy="108" rx="5.5" ry="25" fill="#5a8e42" opacity="0.7"/>
+    <rect x="132.5" y="140" width="3" height="5" fill="#6d5a3a" opacity="0.6"/>
+    
+    <!-- Cypress tree 2 (shorter, further right) -->
+    <ellipse cx="148" cy="118" rx="6" ry="24" fill="#4a7e36" opacity="0.9"/>
+    <ellipse cx="148" cy="115" rx="4.5" ry="20" fill="#5a8e42" opacity="0.6"/>
+    <rect x="146.5" y="140" width="3" height="5" fill="#6d5a3a" opacity="0.5"/>
+
+    <!-- Small round bush right -->
+    <circle cx="120" cy="148" r="7" fill="#5a8e42" opacity="0.5"/>
+  </g>
+</svg>
