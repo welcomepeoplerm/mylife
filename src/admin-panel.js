@@ -147,25 +147,37 @@ export async function renderAdminDashboard() {
 
   const navItems = [
     { section: 'dashboard', icon: '<i class="ph ph-squares-four"></i>', label: 'Dashboard' },
+    { section: 'divider', label: 'CONTENUTI' },
     { section: 'home',      icon: '<i class="ph ph-house"></i>',        label: 'My Home' },
     { section: 'journey',   icon: '<i class="ph ph-map-trifold"></i>',  label: 'My Journey' },
     { section: 'taste',     icon: '<i class="ph ph-fork-knife"></i>',   label: 'My Taste' },
     { section: 'events',    icon: '<i class="ph ph-calendar-dots"></i>',label: 'My Events' },
     { section: 'specials',  icon: '<i class="ph ph-star"></i>',          label: 'My Specials' },
-    { section: 'divider' },
+    { section: 'divider', label: 'SISTEMA' },
     { section: 'stats',     icon: '<i class="ph ph-chart-bar"></i>',    label: 'Statistiche App' },
     { section: 'ui-config', icon: '<i class="ph ph-sliders"></i>',      label: 'Configurazione UI' },
   ];
 
+  // Data corrente formattata
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
   container.innerHTML = `
-    <!-- Top bar -->
+    <!-- Top bar — Light header -->
     <header class="fl-admin-topbar">
       <div class="fl-topbar-brand">
         <div class="fl-topbar-icon"><i class="ph ph-leaf"></i></div>
         <span class="fl-topbar-title">MyLyfe Umbria</span>
         <span class="fl-topbar-version">v${getVersion()}</span>
       </div>
+      <div class="fl-topbar-breadcrumb" id="topbar-breadcrumb">
+        Operational panel <strong>Dashboard</strong>
+      </div>
       <div class="fl-topbar-right">
+        <div class="fl-topbar-status">
+          <span class="fl-topbar-status-dot"></span> Online
+        </div>
+        <span class="fl-topbar-date">${dateStr}</span>
         <button class="fl-button fl-button-sm fl-topbar-logout" id="logout-btn"><i class="ph ph-sign-out"></i> Esci</button>
       </div>
     </header>
@@ -173,11 +185,11 @@ export async function renderAdminDashboard() {
     <!-- Shell: sidebar + main -->
     <div class="fl-admin-shell">
 
-      <!-- Sidebar -->
+      <!-- Sidebar — Light theme -->
       <nav class="fl-sidebar">
         <div class="fl-sidebar-nav">
           ${navItems.map((item, i) => {
-            if (item.section === 'divider') return '<div class="fl-sidebar-divider"></div>';
+            if (item.section === 'divider') return `<div class="fl-sidebar-divider"></div>${item.label ? `<div class="fl-sidebar-section-label">${item.label}</div>` : ''}`;
             const isFirst = item.section === 'dashboard';
             return `<button class="fl-sidebar-item${isFirst ? ' active' : ''}" data-section="${item.section}">
               <span class="fl-sidebar-icon">${item.icon}</span>
@@ -218,6 +230,12 @@ export async function renderAdminDashboard() {
       btn.classList.add('active');
 
       const section = btn.dataset.section;
+      // Update breadcrumb
+      const breadcrumb = container.querySelector('#topbar-breadcrumb');
+      if (breadcrumb) {
+        breadcrumb.innerHTML = `Operational panel <strong>${btn.textContent.trim()}</strong>`;
+      }
+
       contentArea.innerHTML = '<div class="fl-loader"><div class="fl-spinner"></div> Caricamento...</div>';
 
       const sectionContent = await renderAdminSection(section);
@@ -472,22 +490,32 @@ async function renderStatsSection() {
 }
 
 // ─────────────────────────────────────────────────────────
-// Dashboard con KPI
+// Dashboard con KPI — LyfeUmbria Manager style
 async function renderDashboard() {
   const dash = document.createElement('div');
   dash.className = 'fl-dashboard';
 
+  const user = authService.getCurrentUser();
+  const userName = (user.email || 'Admin').split('@')[0];
+
+  // Welcome banner
+  const welcome = document.createElement('div');
+  welcome.className = 'fl-dashboard-welcome';
+  welcome.innerHTML = `
+    <h2>MyLyfe Umbria Manager</h2>
+    <p>Benvenuto, <strong>${userName}</strong>. Pannello operativo con vista sintetica. Naviga dal menu laterale per accedere alle sezioni di gestione.</p>
+  `;
+  dash.appendChild(welcome);
+
   const kpiSections = [
-    { section: 'home',    icon: '<i class="ph ph-house"></i>',         label: 'My Home',    color: '#87a34d', sub: 'Contenuti homepage', key: 'home' },
-    { section: 'journey', icon: '<i class="ph ph-map-trifold"></i>',  label: 'Itinerari',  color: '#548687', sub: 'My Journey',         key: 'journey' },
-    { section: 'taste',   icon: '<i class="ph ph-fork-knife"></i>',   label: 'Ristoranti', color: '#c97c3a', sub: 'My Taste',           key: 'taste' },
-    { section: 'events',  icon: '<i class="ph ph-calendar-dots"></i>',label: 'Eventi',     color: '#5b7ec9', sub: 'My Events',          key: 'events' },
-    { section: 'specials',icon: '<i class="ph ph-star"></i>',          label: 'Specials',   color: '#c97c3a', sub: 'My Specials',        key: 'specials' },
+    { section: 'home',    icon: '<i class="ph ph-house"></i>',         label: 'My Home',    color: '#87a34d', bgColor: '#e8f5e9', sub: 'Contenuti homepage', key: 'home' },
+    { section: 'journey', icon: '<i class="ph ph-map-trifold"></i>',  label: 'Itinerari',  color: '#1565c0', bgColor: '#e3f2fd', sub: 'My Journey',         key: 'journey' },
+    { section: 'taste',   icon: '<i class="ph ph-fork-knife"></i>',   label: 'Ristoranti', color: '#e65100', bgColor: '#fff3e0', sub: 'My Taste',           key: 'taste' },
+    { section: 'events',  icon: '<i class="ph ph-calendar-dots"></i>',label: 'Eventi',     color: '#7b1fa2', bgColor: '#f3e5f5', sub: 'My Events',          key: 'events' },
+    { section: 'specials',icon: '<i class="ph ph-star"></i>',          label: 'Specials',   color: '#c97c3a', bgColor: '#fff8e1', sub: 'My Specials',        key: 'specials' },
   ];
 
   // KPI Grid (skeleton loading)
-  const kpiWrap = document.createElement('div');
-  kpiWrap.innerHTML = `<div class="fl-kpi-section-title">Riepilogo contenuti</div>`;
   const kpiGrid = document.createElement('div');
   kpiGrid.className = 'fl-kpi-grid';
 
@@ -495,22 +523,59 @@ async function renderDashboard() {
     const card = document.createElement('div');
     card.className = 'fl-kpi-card fl-kpi-card-loading';
     card.dataset.section = k.section;
+    card.style.setProperty('--card-color', k.color);
     card.innerHTML = `
       <div class="fl-kpi-card-top">
-        <div class="fl-kpi-icon">${k.icon}</div>
-        <span class="fl-kpi-badge">–</span>
+        <div class="fl-kpi-icon" style="background:${k.bgColor}; color:${k.color}">${k.icon}</div>
       </div>
       <div class="fl-kpi-value">–</div>
       <div class="fl-kpi-label">${k.label}</div>
       <div class="fl-kpi-sub">${k.sub}</div>
+      <div class="fl-kpi-link">Visualizza dettagli <i class="ph ph-caret-right"></i></div>
     `;
+    // Color top bar per card
+    card.style.cssText += `--card-accent:${k.color}`;
+    card.querySelector('.fl-kpi-card')?.style;
     kpiGrid.appendChild(card);
   });
 
-  kpiWrap.appendChild(kpiGrid);
-  dash.appendChild(kpiWrap);
+  // Apply per-card top accent color
+  kpiGrid.querySelectorAll('.fl-kpi-card').forEach(card => {
+    const color = card.style.getPropertyValue('--card-color');
+    if (card.querySelector('::before')) return; // pseudo-element
+  });
 
-  // Activity card (placeholder)
+  dash.appendChild(kpiGrid);
+
+  // Indicators row
+  const indicatorsTitle = document.createElement('div');
+  indicatorsTitle.innerHTML = '<h3 style="font-size:16px;font-weight:700;color:var(--fl-fg-1);display:flex;align-items:center;gap:8px"><span style="width:4px;height:20px;background:var(--fl-secondary);border-radius:2px;display:inline-block"></span> Indicatori operativi</h3>';
+  dash.appendChild(indicatorsTitle);
+
+  const indicatorsRow = document.createElement('div');
+  indicatorsRow.className = 'fl-indicators-row';
+  const indicators = [
+    { icon: '<i class="ph ph-map-trifold"></i>', label: 'Itinerari attivi',    color: 'blue',   key: 'journey' },
+    { icon: '<i class="ph ph-fork-knife"></i>',  label: 'Ristoranti attivi',   color: 'green',  key: 'taste' },
+    { icon: '<i class="ph ph-calendar-dots"></i>',label: 'Eventi programmati', color: 'orange', key: 'events' },
+    { icon: '<i class="ph ph-star"></i>',         label: 'Offerte speciali',   color: 'red',    key: 'specials' },
+  ];
+  indicators.forEach(ind => {
+    const card = document.createElement('div');
+    card.className = 'fl-indicator-card';
+    card.dataset.color = ind.color;
+    card.innerHTML = `
+      <div class="fl-indicator-icon" data-bg="${ind.color}">${ind.icon}</div>
+      <div class="fl-indicator-text">
+        <div class="fl-indicator-value" data-ind="${ind.key}">–</div>
+        <div class="fl-indicator-label">${ind.label}</div>
+      </div>
+    `;
+    indicatorsRow.appendChild(card);
+  });
+  dash.appendChild(indicatorsRow);
+
+  // Activity / sections list card
   const activityCard = document.createElement('div');
   activityCard.className = 'fl-activity-card';
   activityCard.innerHTML = `
@@ -525,7 +590,7 @@ async function renderDashboard() {
   `;
   dash.appendChild(activityCard);
 
-  // Click su riga activity → naviga alla sezione
+  // Click handlers — navigate to section
   activityCard.querySelectorAll('[data-goto]').forEach(row => {
     row.addEventListener('click', () => {
       const section = row.dataset.goto;
@@ -534,7 +599,6 @@ async function renderDashboard() {
     });
   });
 
-  // Click su kpi card → naviga alla sezione
   kpiGrid.querySelectorAll('.fl-kpi-card').forEach(card => {
     card.addEventListener('click', () => {
       const section = card.dataset.section;
@@ -543,7 +607,7 @@ async function renderDashboard() {
     });
   });
 
-  // Carica i conteggi async
+  // Load counts async
   (async () => {
     const counts = {};
     await Promise.allSettled(kpiSections.map(async k => {
@@ -559,10 +623,15 @@ async function renderDashboard() {
       if (card) {
         card.classList.remove('fl-kpi-card-loading');
         card.querySelector('.fl-kpi-value').textContent = count;
-        card.querySelector('.fl-kpi-badge').textContent = count + ' elementi';
       }
       const actRow = activityCard.querySelector(`[data-count="${k.section}"]`);
       if (actRow) actRow.textContent = count;
+    });
+
+    // Update indicators
+    indicators.forEach(ind => {
+      const el = indicatorsRow.querySelector(`[data-ind="${ind.key}"]`);
+      if (el) el.textContent = counts[ind.key] ?? 0;
     });
   })();
 

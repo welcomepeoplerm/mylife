@@ -1,6 +1,6 @@
 /* =====================================================
    FLUENT UI 2 - Admin Backoffice Design System
-   MyLyfe Umbria   |   Brand colors maintained
+   MyLyfe Umbria   |   LyfeUmbria Manager Style
    ===================================================== */
 
 /* ---------- Design Tokens ---------- */
@@ -13,10 +13,11 @@
   --fl-brand-tint2:      #B8DECA;
   --fl-brand-shadow:     rgba(135,163,77,0.22);
 
-  /* Secondary (platform dark green) */
-  --fl-secondary:        #1B6B3A;
-  --fl-secondary-hover:  #326022;
-  --fl-secondary-tint:   #e5f2d8;
+  /* Secondary — now used for sidebar/topbar (blue corporate) */
+  --fl-secondary:        #1565c0;
+  --fl-secondary-hover:  #0d47a1;
+  --fl-secondary-tint:   #e3f2fd;
+  --fl-secondary-light:  #1976d2;
 
   /* Neutrals (Fluent 2) */
   --fl-bg-1:             #ffffff;
@@ -651,15 +652,13 @@
   line-height: 1;
   vertical-align: middle;
 }
-.fl-sidebar-icon .ph, .fl-sidebar-icon i { font-size: 18px; }
-.fl-topbar-icon .ph, .fl-topbar-icon i  { font-size: 20px; color: #fff; }
-.fl-kpi-icon .ph, .fl-kpi-icon i        { font-size: 24px; color: var(--fl-brand); }
+.fl-kpi-icon .ph, .fl-kpi-icon i        { font-size: 24px; }
 .fl-empty-icon .ph, .fl-empty-icon i    { font-size: 48px; opacity: 0.35; }
 .fl-icon-button .ph, .fl-icon-button i  { font-size: 17px; }
 .fl-brand-logo-wrap .ph, .fl-brand-logo-wrap i { font-size: 28px; color: #fff; }
 
 /* =====================================================
-   TOP BAR
+   TOP BAR  —  Light header (LyfeUmbria Manager style)
    ===================================================== */
 
 .fl-admin-topbar {
@@ -667,10 +666,10 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--fl-sp-4);
-  height: 56px;
+  height: 52px;
   padding: 0 var(--fl-sp-6);
-  background: var(--fl-secondary);
-  box-shadow: var(--fl-shadow-4);
+  background: var(--fl-bg-1);
+  border-bottom: 1px solid var(--fl-stroke-2);
   position: sticky;
   top: 0;
   z-index: 200;
@@ -685,32 +684,72 @@
 
 .fl-topbar-icon {
   width: 34px; height: 34px;
-  background: rgba(255,255,255,0.15);
+  background: var(--fl-secondary-tint);
   border-radius: var(--fl-r-lg);
   display: flex; align-items: center; justify-content: center;
   font-size: 18px;
 }
+.fl-topbar-icon .ph, .fl-topbar-icon i { font-size: 20px; color: var(--fl-secondary); }
 
 .fl-topbar-title {
   font-size: 15px;
   font-weight: 700;
-  color: #fff;
+  color: var(--fl-fg-1);
   letter-spacing: -0.2px;
 }
 
 .fl-topbar-version {
   font-size: 11px;
-  color: rgba(255,255,255,0.55);
-  background: rgba(255,255,255,0.1);
+  color: var(--fl-fg-4);
+  background: var(--fl-bg-2);
+  border: 1px solid var(--fl-stroke-2);
   padding: 1px 7px;
   border-radius: var(--fl-r-pill);
   margin-left: 4px;
 }
 
+/* Breadcrumb in the middle */
+.fl-topbar-breadcrumb {
+  font-size: 13px;
+  color: var(--fl-fg-3);
+  display: flex;
+  align-items: center;
+  gap: var(--fl-sp-2);
+}
+.fl-topbar-breadcrumb strong {
+  color: var(--fl-fg-1);
+  font-weight: 600;
+}
+
 .fl-topbar-right {
   display: flex;
   align-items: center;
-  gap: var(--fl-sp-3);
+  gap: var(--fl-sp-4);
+}
+
+/* Online status indicator */
+.fl-topbar-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--fl-success);
+  font-weight: 600;
+}
+.fl-topbar-status-dot {
+  width: 8px; height: 8px;
+  background: var(--fl-success);
+  border-radius: 50%;
+  animation: fl-pulse 2s infinite;
+}
+@keyframes fl-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.fl-topbar-date {
+  font-size: 12px;
+  color: var(--fl-fg-3);
+  margin-left: var(--fl-sp-2);
 }
 
 .fl-topbar-user {
@@ -721,7 +760,7 @@
 
 .fl-user-avatar {
   width: 32px; height: 32px;
-  background: var(--fl-brand);
+  background: var(--fl-secondary);
   color: #fff;
   border-radius: var(--fl-r-pill);
   display: flex; align-items: center; justify-content: center;
@@ -732,7 +771,7 @@
 
 .fl-user-email {
   font-size: 13px;
-  color: rgba(255,255,255,0.80);
+  color: var(--fl-fg-2);
   max-width: 220px;
   white-space: nowrap;
   overflow: hidden;
@@ -740,12 +779,12 @@
 }
 
 .fl-topbar-logout {
-  background: rgba(255,255,255,0.12) !important;
-  border-color: rgba(255,255,255,0.2) !important;
-  color: rgba(255,255,255,0.90) !important;
+  background: var(--fl-bg-2) !important;
+  border-color: var(--fl-stroke-1) !important;
+  color: var(--fl-fg-2) !important;
 }
 .fl-topbar-logout:hover {
-  background: rgba(255,255,255,0.20) !important;
+  background: var(--fl-bg-3) !important;
 }
 
 /* =====================================================
@@ -760,26 +799,27 @@
 }
 
 /* =====================================================
-   LEFT SIDEBAR
+   LEFT SIDEBAR — Light theme (LyfeUmbria Manager style)
    ===================================================== */
 
 .fl-sidebar {
   width: 240px;
   flex-shrink: 0;
-  background: var(--fl-secondary);
+  background: var(--fl-bg-1);
+  border-right: 1px solid var(--fl-stroke-2);
   display: flex;
   flex-direction: column;
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,0.15) transparent;
+  scrollbar-color: var(--fl-stroke-1) transparent;
 }
 .fl-sidebar::-webkit-scrollbar { width: 4px; }
-.fl-sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
+.fl-sidebar::-webkit-scrollbar-thumb { background: var(--fl-stroke-1); border-radius: 4px; }
 
 .fl-sidebar-head {
   padding: var(--fl-sp-5) var(--fl-sp-5) var(--fl-sp-4);
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  border-bottom: 1px solid var(--fl-stroke-2);
   margin-bottom: var(--fl-sp-2);
 }
 
@@ -791,7 +831,7 @@
 
 .fl-sidebar-logo-icon {
   width: 36px; height: 36px;
-  background: rgba(255,255,255,0.15);
+  background: var(--fl-secondary-tint);
   border-radius: var(--fl-r-lg);
   display: flex; align-items: center; justify-content: center;
   font-size: 20px;
@@ -805,14 +845,23 @@
 .fl-sidebar-logo-title {
   font-size: 14px;
   font-weight: 700;
-  color: #fff;
+  color: var(--fl-fg-1);
   line-height: 1.2;
 }
 
 .fl-sidebar-logo-sub {
   font-size: 11px;
-  color: rgba(255,255,255,0.45);
+  color: var(--fl-fg-4);
   margin-top: 1px;
+}
+
+.fl-sidebar-section-label {
+  padding: var(--fl-sp-4) var(--fl-sp-4) var(--fl-sp-1);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--fl-fg-4);
 }
 
 .fl-sidebar-section {
@@ -821,13 +870,13 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1.2px;
-  color: rgba(255,255,255,0.35);
+  color: var(--fl-fg-4);
 }
 
 .fl-sidebar-nav {
   display: flex;
   flex-direction: column;
-  padding: 0 var(--fl-sp-2);
+  padding: var(--fl-sp-2) var(--fl-sp-2);
   gap: 2px;
 }
 
@@ -837,7 +886,7 @@
   align-items: center;
   gap: var(--fl-sp-3);
   padding: 0 var(--fl-sp-3);
-  height: 42px;
+  height: 40px;
   width: 100%;
   background: transparent;
   border: none;
@@ -845,29 +894,27 @@
   font-family: var(--fl-font);
   font-size: 14px;
   font-weight: 500;
-  color: rgba(255,255,255,0.72);
+  color: var(--fl-fg-2);
   cursor: pointer;
   white-space: nowrap;
   text-align: left;
   transition: background 0.12s, color 0.12s;
 }
 .fl-sidebar-item:hover {
-  background: rgba(255,255,255,0.1);
-  color: #fff;
+  background: var(--fl-bg-2);
+  color: var(--fl-fg-1);
 }
 .fl-sidebar-item.active {
-  background: rgba(255,255,255,0.16);
+  background: var(--fl-secondary);
   color: #fff;
   font-weight: 600;
+  box-shadow: 0 2px 6px rgba(21,101,192,0.25);
+}
+.fl-sidebar-item.active .fl-sidebar-icon i {
+  color: #fff;
 }
 .fl-sidebar-item.active::before {
-  content: '';
-  position: absolute;
-  left: 0; top: 50%;
-  transform: translateY(-50%);
-  width: 3px; height: 60%;
-  background: var(--fl-brand-tint2);
-  border-radius: 0 3px 3px 0;
+  display: none;
 }
 .fl-sidebar-icon {
   font-size: 17px;
@@ -876,17 +923,20 @@
   text-align: center;
   flex-shrink: 0;
 }
+.fl-sidebar-icon .ph, .fl-sidebar-icon i { font-size: 18px; color: var(--fl-fg-3); }
+.fl-sidebar-item.active .fl-sidebar-icon .ph,
+.fl-sidebar-item.active .fl-sidebar-icon i { color: #fff; }
 
 .fl-sidebar-divider {
   height: 1px;
-  background: rgba(255,255,255,0.1);
+  background: var(--fl-stroke-2);
   margin: var(--fl-sp-3) var(--fl-sp-3);
 }
 
 .fl-sidebar-footer {
   margin-top: auto;
   padding: var(--fl-sp-4) var(--fl-sp-4) var(--fl-sp-5);
-  border-top: 1px solid rgba(255,255,255,0.1);
+  border-top: 1px solid var(--fl-stroke-2);
   display: flex;
   align-items: center;
   gap: var(--fl-sp-2);
@@ -895,7 +945,13 @@
 .fl-sidebar-footer .fl-user-email {
   flex: 1;
   font-size: 11px;
+  color: var(--fl-fg-3);
   max-width: none;
+}
+
+.fl-sidebar-footer .fl-user-avatar {
+  background: var(--fl-secondary);
+  color: #fff;
 }
 
 /* =====================================================
@@ -918,13 +974,32 @@
 }
 
 /* =====================================================
-   DASHBOARD KPI
+   DASHBOARD KPI — LyfeUmbria Manager card style
    ===================================================== */
 
 .fl-dashboard {
   display: flex;
   flex-direction: column;
   gap: var(--fl-sp-6);
+}
+
+/* Welcome hero banner */
+.fl-dashboard-welcome {
+  background: var(--fl-bg-1);
+  border-radius: var(--fl-r-xl);
+  padding: var(--fl-sp-6) var(--fl-sp-8);
+  box-shadow: var(--fl-shadow-2);
+  border: 1px solid var(--fl-stroke-2);
+}
+.fl-dashboard-welcome h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--fl-fg-1);
+  margin-bottom: var(--fl-sp-1);
+}
+.fl-dashboard-welcome p {
+  font-size: 14px;
+  color: var(--fl-fg-3);
 }
 
 .fl-dashboard-hero {
@@ -967,10 +1042,11 @@
 
 .fl-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: var(--fl-sp-4);
 }
 
+/* KPI card — styled like LyfeUmbria Manager cards */
 .fl-kpi-card {
   background: var(--fl-bg-1);
   border-radius: var(--fl-r-xl);
@@ -978,15 +1054,25 @@
   box-shadow: var(--fl-shadow-2);
   display: flex;
   flex-direction: column;
-  gap: var(--fl-sp-3);
+  gap: var(--fl-sp-2);
   border: 1px solid var(--fl-stroke-2);
   cursor: pointer;
   transition: box-shadow 0.15s, transform 0.15s, border-color 0.15s;
+  position: relative;
+  overflow: hidden;
+}
+.fl-kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 3px;
+  background: var(--card-color, var(--fl-brand));
+  border-radius: var(--fl-r-xl) var(--fl-r-xl) 0 0;
 }
 .fl-kpi-card:hover {
   box-shadow: var(--fl-shadow-8);
   transform: translateY(-2px);
-  border-color: var(--fl-brand);
+  border-color: var(--fl-secondary);
 }
 
 .fl-kpi-card-top {
@@ -997,7 +1083,6 @@
 
 .fl-kpi-icon {
   width: 44px; height: 44px;
-  background: var(--fl-brand-tint1);
   border-radius: var(--fl-r-lg);
   display: flex; align-items: center; justify-content: center;
   font-size: 22px;
@@ -1009,20 +1094,20 @@
   padding: 2px 8px;
   border-radius: var(--fl-r-pill);
   font-weight: 600;
-  background: var(--fl-brand-tint1);
-  color: var(--fl-brand);
+  background: var(--fl-bg-2);
+  color: var(--fl-fg-3);
 }
 
 .fl-kpi-value {
   font-size: 36px;
   font-weight: 800;
-  color: var(--fl-brand);
+  color: var(--fl-fg-1);
   line-height: 1;
   letter-spacing: -1px;
 }
 
 .fl-kpi-label {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--fl-fg-2);
 }
@@ -1031,6 +1116,22 @@
   font-size: 12px;
   color: var(--fl-fg-3);
   margin-top: -var(--fl-sp-1);
+}
+
+/* "Visualizza dettagli >" link at bottom of card */
+.fl-kpi-link {
+  display: flex;
+  align-items: center;
+  gap: var(--fl-sp-1);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--fl-secondary);
+  margin-top: auto;
+  padding-top: var(--fl-sp-2);
+  border-top: 1px solid var(--fl-stroke-2);
+}
+.fl-kpi-link i {
+  font-size: 14px;
 }
 
 .fl-kpi-card-loading .fl-kpi-value {
@@ -1044,6 +1145,94 @@
   0%   { opacity: 1; }
   50%  { opacity: 0.5; }
   100% { opacity: 1; }
+}
+
+/* Indicators row — colored left accent bars */
+.fl-indicators-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--fl-sp-4);
+}
+
+.fl-indicator-card {
+  background: var(--fl-bg-1);
+  border-radius: var(--fl-r-xl);
+  padding: var(--fl-sp-5) var(--fl-sp-5) var(--fl-sp-5) var(--fl-sp-6);
+  box-shadow: var(--fl-shadow-2);
+  border: 1px solid var(--fl-stroke-2);
+  display: flex;
+  align-items: center;
+  gap: var(--fl-sp-4);
+  position: relative;
+  overflow: hidden;
+}
+.fl-indicator-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0;
+  width: 4px; height: 100%;
+}
+.fl-indicator-card[data-color="green"]::before { background: var(--fl-success); }
+.fl-indicator-card[data-color="blue"]::before { background: var(--fl-secondary); }
+.fl-indicator-card[data-color="orange"]::before { background: var(--fl-warning); }
+.fl-indicator-card[data-color="red"]::before { background: var(--fl-error); }
+
+.fl-indicator-icon {
+  width: 42px; height: 42px;
+  border-radius: var(--fl-r-lg);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.fl-indicator-icon[data-bg="green"] { background: var(--fl-success-bg); color: var(--fl-success); }
+.fl-indicator-icon[data-bg="blue"] { background: var(--fl-info-bg); color: var(--fl-info); }
+.fl-indicator-icon[data-bg="orange"] { background: var(--fl-warning-bg); color: var(--fl-warning); }
+.fl-indicator-icon[data-bg="red"] { background: var(--fl-error-bg); color: var(--fl-error); }
+
+.fl-indicator-text {
+  flex: 1;
+}
+.fl-indicator-value {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--fl-fg-1);
+  line-height: 1.1;
+}
+.fl-indicator-label {
+  font-size: 12px;
+  color: var(--fl-fg-3);
+  margin-top: 2px;
+}
+
+/* Charts row */
+.fl-charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--fl-sp-4);
+}
+@media (max-width: 900px) {
+  .fl-charts-row { grid-template-columns: 1fr; }
+}
+.fl-chart-card {
+  background: var(--fl-bg-1);
+  border-radius: var(--fl-r-xl);
+  box-shadow: var(--fl-shadow-2);
+  border: 1px solid var(--fl-stroke-2);
+  overflow: hidden;
+}
+.fl-chart-header {
+  padding: var(--fl-sp-4) var(--fl-sp-5);
+  border-bottom: 1px solid var(--fl-stroke-2);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--fl-fg-1);
+}
+.fl-chart-body {
+  padding: var(--fl-sp-5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
 }
 
 .fl-activity-card {
@@ -1903,6 +2092,7 @@
   }
   .fl-sidebar-logo-text,
   .fl-sidebar-section,
+  .fl-sidebar-section-label,
   .fl-sidebar-item span:not(.fl-sidebar-icon),
   .fl-sidebar-footer .fl-user-email,
   .fl-sidebar-footer .fl-button {
@@ -1912,11 +2102,11 @@
     justify-content: center;
     padding: 0;
   }
-  .fl-sidebar-item.active::before {
-    height: 3px; width: 60%;
-    left: 50%; top: 0;
-    transform: translateX(-50%);
-    border-radius: 0 0 3px 3px;
+  .fl-topbar-breadcrumb {
+    display: none;
+  }
+  .fl-topbar-date {
+    display: none;
   }
 }
 
